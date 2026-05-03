@@ -1,0 +1,5 @@
+{
+  "country": "Ethiopia",
+  "program": "HEW",
+  "referral_triggers": ["malnutrition warning", "respiratory distress"]
+}

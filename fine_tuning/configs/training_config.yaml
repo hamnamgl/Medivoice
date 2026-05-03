@@ -1,0 +1,5 @@
+model_name: gemma
+dataset_path: fine_tuning/datasets/processed
+output_dir: fine_tuning/checkpoints
+epochs: 3
+learning_rate: 0.0002

@@ -1,0 +1,5 @@
+{
+  "name": "WHO IMCI",
+  "version": "starter",
+  "conditions": ["fever", "diarrhea", "respiratory distress"]
+}

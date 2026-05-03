@@ -1,0 +1,5 @@
+{
+  "country": "Pakistan",
+  "program": "Lady Health Worker",
+  "referral_triggers": ["bleeding", "unconscious", "high fever"]
+}

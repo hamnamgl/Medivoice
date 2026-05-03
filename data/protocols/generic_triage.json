@@ -1,0 +1,5 @@
+{
+  "routine": ["education", "follow-up"],
+  "urgent": ["same-day review", "monitor symptoms"],
+  "emergency": ["immediate referral", "supervisor escalation"]
+}
