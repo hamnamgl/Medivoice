@@ -2,3 +2,7 @@ streamlit>=1.35.0
 pytest>=8.0.0
 requests>=2.31.0
 ollama>=0.4.0
+pyttsx3>=2.90
+numpy>=1.26.0
+sounddevice>=0.4.7
+openai-whisper>=20231117
