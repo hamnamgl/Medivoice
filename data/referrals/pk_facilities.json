@@ -1,3 +1,24 @@
-[
-  {"name": "Basic Health Unit A", "district": "Lahore", "phone": "+92-000-0000000"}
-]
+{
+  "country": "Pakistan",
+  "last_updated": "2026-01",
+  "facilities": {
+    "punjab": {
+      "rawalpindi": "District Headquarters Hospital Rawalpindi - 051-9270330",
+      "lahore": "Services Hospital Lahore - 042-99203530",
+      "faisalabad": "Allied Hospital Faisalabad - 041-9220233",
+      "multan": "Nishtar Hospital Multan - 061-9200012"
+    },
+    "sindh": {
+      "karachi": "Civil Hospital Karachi - 021-99215740",
+      "hyderabad": "Liaquat University Hospital - 022-9213310"
+    },
+    "kpk": {
+      "peshawar": "Lady Reading Hospital - 091-9211330",
+      "abbottabad": "Ayub Teaching Hospital - 0992-9310551"
+    },
+    "balochistan": {
+      "quetta": "Civil Hospital Quetta - 081-9202027"
+    }
+  },
+  "emergency": "1122 (Punjab) | 115 (Sindh) | 1122 (KPK)"
+}

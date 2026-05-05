@@ -1,5 +1,49 @@
 {
-  "routine": ["education", "follow-up"],
-  "urgent": ["same-day review", "monitor symptoms"],
-  "emergency": ["immediate referral", "supervisor escalation"]
+  "version": "1.0",
+  "source": "WHO IMCI Guidelines 2024",
+  "emergency_signs": [
+    "unconscious",
+    "not breathing",
+    "severe bleeding",
+    "convulsions",
+    "unable to drink",
+    "sunken eyes severe",
+    "behosh",
+    "sans nahi",
+    "shadeed khoon",
+    "daureh"
+  ],
+  "refer_signs": [
+    "fever_3_days",
+    "not_eating",
+    "vomiting_everything",
+    "diarrhea_blood",
+    "fast_breathing",
+    "chest_indrawing",
+    "tez_bukhar",
+    "kha_nahi_raha",
+    "khoon_wali_dast"
+  ],
+  "conditions": {
+    "fever": {
+      "emergency": ["convulsions", "unconscious", "stiff neck"],
+      "refer": ["fever > 3 days", "age < 2 months", "not drinking"],
+      "home_care": ["fever < 3 days", "drinking well", "alert"]
+    },
+    "diarrhea": {
+      "emergency": ["sunken eyes", "skin pinch very slow", "unconscious"],
+      "refer": ["blood in stool", "not improving 3 days", "vomiting all"],
+      "home_care": ["ORS tolerated", "alert", "drinking well"]
+    },
+    "cough": {
+      "emergency": ["not breathing", "blue lips", "unconscious"],
+      "refer": ["fast breathing", "chest indrawing", "stridor"],
+      "home_care": ["no danger signs", "drinking well", "alert"]
+    },
+    "malnutrition": {
+      "emergency": ["severe wasting", "edema both feet", "unconscious"],
+      "refer": ["moderate wasting", "not eating", "MUAC < 115mm"],
+      "home_care": ["mild", "eating", "MUAC > 125mm"]
+    }
+  }
 }

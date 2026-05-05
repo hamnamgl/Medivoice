@@ -1,3 +1,53 @@
-[
-  {"name": "Paracetamol", "category": "analgesic", "notes": "Starter reference entry"}
-]
+{
+  "version": "1.0",
+  "source": "WHO Essential Medicines List 2024",
+  "medicines": {
+    "paracetamol": {
+      "dose_per_kg": 15,
+      "unit": "mg",
+      "frequency": "every 6 hours",
+      "max_doses_per_day": 4,
+      "route": "oral",
+      "notes": "Do not exceed 60mg/kg/day"
+    },
+    "amoxicillin": {
+      "dose_per_kg": 25,
+      "unit": "mg",
+      "frequency": "every 8 hours",
+      "duration_days": 5,
+      "route": "oral",
+      "notes": "For pneumonia and infections"
+    },
+    "ors": {
+      "dose_per_kg": null,
+      "unit": "ml",
+      "frequency": "200ml after every loose stool",
+      "route": "oral",
+      "notes": "No weight restriction. Continue until diarrhea stops."
+    },
+    "zinc": {
+      "dose_per_kg": null,
+      "unit": "mg",
+      "fixed_dose": 20,
+      "frequency": "once daily",
+      "duration_days": 10,
+      "route": "oral",
+      "notes": "For children >6 months with diarrhea"
+    },
+    "ibuprofen": {
+      "dose_per_kg": 10,
+      "unit": "mg",
+      "frequency": "every 8 hours",
+      "route": "oral",
+      "notes": "Give with food. Do not use if dehydrated."
+    },
+    "cotrimoxazole": {
+      "dose_per_kg": 4,
+      "unit": "mg",
+      "frequency": "every 12 hours",
+      "duration_days": 5,
+      "route": "oral",
+      "notes": "Trimethoprim component. For UTI and dysentery."
+    }
+  }
+}
