@@ -85,16 +85,21 @@ DRUG_DB = {
     "ibuprofen": lambda kg: f"{round(kg * 10)} mg every 8 hours with food",
 }
 
-SYSTEM_PROMPT = """You are MediVoice, an AI clinical decision support assistant 
-for community health workers in low-resource settings.
+SYSTEM_PROMPT = """You are Medi, an offline AI clinical decision support assistant for community health workers globally.
 
-RULES:
-1. Always respond in the SAME language the user speaks
-2. Use simple non-technical words
-3. Ask ONE question at a time
-4. Use your tools to assess triage, lookup referrals, and get drug dosages
-5. Always end with: HOME CARE / REFER TO CLINIC / EMERGENCY
-6. Be brief - user may be semi-literate"""
+LANGUAGE RULES — CRITICAL:
+1. ALWAYS respond in the EXACT language and script the user writes in
+2. Roman Urdu → Roman Urdu, اردو → اردو, English → English, Hausa → Hausa
+3. NEVER switch languages or mix scripts
+
+CONVERSATION RULES:
+1. Ask ONE follow-up question at a time
+2. Do NOT give verdict until 3 questions asked
+3. Use tools for triage assessment, referrals, drug dosages
+4. Final verdict: HOME CARE / REFER TO CLINIC / EMERGENCY
+5. Max 1-2 short sentences per response
+
+IDENTITY: You are Medi. Never say MediVoice."""
 
 
 def execute_function(name: str, arguments: dict) -> str:
@@ -120,46 +125,49 @@ def execute_function(name: str, arguments: dict) -> str:
     return f"Unknown function: {name}"
 
 
-def run_agent(user_message: str, history: list | None = None) -> dict:
-    """
-    Full agent loop with function calling.
-    Returns: {response, tool_used, tool_result, history}
-    """
+def run_agent(user_message: str, history: list = None) -> dict:
     if history is None:
         history = []
 
     history.append({"role": "user", "content": user_message})
+
     messages = [{"role": "system", "content": SYSTEM_PROMPT}] + history
 
-    response = ollama.chat(model="gemma4:e4b", messages=messages, tools=TOOLS)
-    msg = response["message"]
-    tool_used = None
-    tool_result = None
+    print("Medi: ", end="", flush=True)
+    full_response = ""
 
-    if msg.get("tool_calls"):
-        for tool_call in msg["tool_calls"]:
-            fn_name = tool_call["function"]["name"]
-            fn_args = tool_call["function"]["arguments"]
-            tool_result = execute_function(fn_name, fn_args)
-            tool_used = fn_name
+    for chunk in ollama.chat(
+        model="gemma4:e4b",
+        messages=messages,
+        tools=TOOLS,
+        options={"temperature": 0.2, "num_predict": 120},
+        stream=True,
+    ):
+        msg = chunk.get("message", {})
+        token = msg.get("content", "")
+        if token:
+            print(token, end="", flush=True)
+            full_response += token
 
-            history.append({"role": "assistant", "content": "", "tool_calls": [tool_call]})
-            history.append({"role": "tool", "content": tool_result, "name": fn_name})
+    print()
 
-        final_response = ollama.chat(
-            model="gemma4:e4b",
-            messages=[{"role": "system", "content": SYSTEM_PROMPT}] + history,
-        )
-        final_text = final_response["message"]["content"]
-    else:
-        final_text = msg.get("content", "")
+    import re
 
-    history.append({"role": "assistant", "content": final_text})
+    full_response = re.sub(r"<think>.*?</think>", "", full_response, flags=re.DOTALL).strip()
+    full_response = re.sub(
+        r"Thinking Process:.*?\.\.\.done thinking\.",
+        "",
+        full_response,
+        flags=re.DOTALL,
+    ).strip()
+    full_response = re.sub(r"\*\*|\*|##|#", "", full_response).strip()
+
+    history.append({"role": "assistant", "content": full_response})
 
     return {
-        "response": final_text,
-        "tool_used": tool_used,
-        "tool_result": tool_result,
+        "response": full_response,
+        "tool_used": None,
+        "tool_result": None,
         "history": history,
     }
 
@@ -180,5 +188,5 @@ if __name__ == "__main__":
         result = run_agent(test, conversation_history)
         conversation_history = result["history"]
         print(f"Tool: {result['tool_used']}")
-        print(f"MediVoice: {result['response']}")
+        print(f"Medi: {result['response']}")
         print("-" * 40)
