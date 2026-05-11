@@ -182,6 +182,13 @@ Covers: triage logic, local DB, language detection, image analyzer, Gemma engine
 
 ---
 
+## Demo Mode Vs True Offline
+
+- **Demo mode:** If you use Kaggle + ngrok, the model runs on the Kaggle machine and the PWA talks to it through a public URL. This is great for demos, but your phone/browser still needs internet to reach that tunnel.
+- **True offline mode:** Real offline use only happens when Ollama is running on the same laptop, Android device, or reachable local network machine. In that setup, no internet is needed after install and model download.
+
+---
+
 ## 📁 Docs
 
 - [Technical Write-up](docs/TECHNICAL_WRITEUP.md)

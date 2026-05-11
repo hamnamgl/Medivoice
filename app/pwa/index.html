@@ -219,6 +219,15 @@
       color: #9ca3af;
     }
 
+    #mode-note {
+      background: #2a2210;
+      color: #fde68a;
+      border-left: 3px solid #fbbf24;
+      padding: 10px 16px;
+      font-size: 0.76rem;
+      line-height: 1.5;
+    }
+
     #input-area {
       display: flex;
       padding: 12px 16px;
@@ -352,6 +361,10 @@
   <input id="ollama-url" type="text" placeholder="https://your-ngrok-url.ngrok-free.app/api/chat" />
   <button id="save-url-btn" onclick="saveOllamaUrl()">Save URL</button>
   <div id="url-hint">Use local default or paste your Kaggle/ngrok public Ollama URL here.</div>
+</div>
+
+<div id="mode-note">
+  Demo mode with Kaggle + ngrok still needs internet between your phone/browser and the Kaggle tunnel. True offline mode only works when Ollama runs on the same local device or local network.
 </div>
 
 <div id="input-area">
