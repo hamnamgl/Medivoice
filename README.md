@@ -189,6 +189,68 @@ Covers: triage logic, local DB, language detection, image analyzer, Gemma engine
 
 ---
 
+## Production-Grade Offline Roadmap
+
+To make MediVoice properly production-grade for real field deployment, the architecture should move from a demo-friendly setup to a hardened offline stack:
+
+### 1. Local Runtime on Target Device
+
+- Run Ollama directly on the deployment laptop, mini PC, or Android-compatible edge device
+- Preload the production model during setup so the user never has to download in the field
+- Package FFmpeg, Whisper assets, and app dependencies with the installer
+
+### 2. Local-Only Networking
+
+- Default the PWA or local UI to `http://localhost:11434/api/chat` or a local LAN IP
+- Use Kaggle + ngrok only for demo mode, never as the primary production path
+- Add automatic local endpoint detection and a clear “demo mode / offline mode” indicator
+
+### 3. Safer Clinical Tooling
+
+- Expand structured function calling for triage, referrals, and dosing
+- Validate tool arguments before execution
+- Add explicit refusal / escalation rules for unsupported or ambiguous cases
+- Add protocol-backed reasoning outputs for explainability and auditability
+
+### 4. Stronger Data Layer
+
+- Encrypt local SQLite records at rest
+- Version offline protocol and referral datasets
+- Add migration scripts for schema upgrades
+- Add signed update bundles for trusted offline content refresh
+
+### 5. Reliability and Recovery
+
+- Add health checks for Ollama, audio devices, and model availability
+- Cache model readiness state and fail gracefully if a model is missing
+- Add structured logging for app, model, and tool failures
+- Add restart-safe local queues for pending visit writes
+
+### 6. Packaging and Device Management
+
+- Create a one-click installer for Windows/Linux field laptops
+- Build an Android-friendly wrapper or kiosk shell for the PWA
+- Preconfigure language packs, voices, and local data during install
+- Add a supervised update workflow for NGOs or district admins
+
+### 7. Security and Governance
+
+- Keep all patient data local by default
+- Add role-based supervisor mode if case review is needed
+- Store audit trails for triage decisions and tool outputs
+- Provide a deployment checklist for device encryption, backups, and physical access control
+
+### 8. Validation Before Field Rollout
+
+- Run multilingual regression tests for core flows
+- Evaluate tool-calling accuracy on protocol-aligned scenarios
+- Benchmark latency on low-resource hardware
+- Pilot with supervised health workers before broad deployment
+
+In short: **Kaggle proves the demo, but production-grade offline MediVoice means local Ollama, preloaded models, encrypted local data, hardened tooling, and deployment packaging for field hardware.**
+
+---
+
 ## 📁 Docs
 
 - [Technical Write-up](docs/TECHNICAL_WRITEUP.md)
