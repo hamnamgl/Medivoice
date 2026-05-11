@@ -85,21 +85,27 @@ DRUG_DB = {
     "ibuprofen": lambda kg: f"{round(kg * 10)} mg every 8 hours with food",
 }
 
-SYSTEM_PROMPT = """You are Medi, an offline AI clinical decision support assistant for community health workers globally.
+SYSTEM_PROMPT = """You are Medi, a warm caring AI health assistant for community health workers globally.
 
-LANGUAGE RULES — CRITICAL:
-1. ALWAYS respond in the EXACT language and script the user writes in
-2. Roman Urdu → Roman Urdu, اردو → اردو, English → English, Hausa → Hausa
-3. NEVER switch languages or mix scripts
+LANGUAGE: Always respond in exact same language user wrote in. Never switch.
 
-CONVERSATION RULES:
-1. Ask ONE follow-up question at a time
-2. Do NOT give verdict until 3 questions asked
-3. Use tools for triage assessment, referrals, drug dosages
-4. Final verdict: HOME CARE / REFER TO CLINIC / EMERGENCY
-5. Max 1-2 short sentences per response
+PERSONALITY:
+- Warm, empathetic: "Oh that sounds tough"
+- Max 2 short sentences
+- Never repeat questions already answered
 
-IDENTITY: You are Medi. Never say MediVoice."""
+CLINICAL FLOW — 4 TURNS MAX:
+Turn 1: Acknowledge + duration
+Turn 2: ONE symptom question
+Turn 3: ONE danger sign
+Turn 4: Verdict + reasoning
+
+VERDICT format:
+HOME CARE: [reason]
+REFER TO CLINIC: [reason]
+EMERGENCY: [reason]
+
+Never ask rating scales. Never ask food/sleep/stress unless relevant."""
 
 
 def execute_function(name: str, arguments: dict) -> str:
@@ -130,44 +136,106 @@ def run_agent(user_message: str, history: list = None) -> dict:
         history = []
 
     history.append({"role": "user", "content": user_message})
-
     messages = [{"role": "system", "content": SYSTEM_PROMPT}] + history
 
-    print("Medi: ", end="", flush=True)
+    models_to_try = ["gemma3:4b", "gemma4:e4b"]
     full_response = ""
+    tool_used = None
+    tool_result = None
 
-    for chunk in ollama.chat(
-        model="gemma4:e4b",
-        messages=messages,
-        tools=TOOLS,
-        options={"temperature": 0.2, "num_predict": 120},
-        stream=True,
-    ):
-        msg = chunk.get("message", {})
-        token = msg.get("content", "")
-        if token:
-            print(token, end="", flush=True)
-            full_response += token
+    for model in models_to_try:
+        try:
+            response = ollama.chat(
+                model=model,
+                messages=messages,
+                tools=TOOLS,
+                options={"temperature": 0.1, "num_predict": 150},
+            )
 
-    print()
+            msg = response.get("message", {})
+            if not isinstance(msg, dict):
+                msg = {
+                    "content": getattr(msg, "content", ""),
+                    "tool_calls": getattr(msg, "tool_calls", None),
+                }
+
+            tool_calls = msg.get("tool_calls") or []
+
+            if tool_calls:
+                for tool_call in tool_calls:
+                    fn = tool_call.get("function", {})
+                    fn_name = fn.get("name", "")
+                    fn_args = fn.get("arguments", {})
+                    if isinstance(fn_args, str):
+                        fn_args = json.loads(fn_args)
+
+                    tool_used = fn_name
+                    tool_result = execute_function(fn_name, fn_args)
+
+                    messages_with_tool = messages + [
+                        {"role": "assistant", "content": "", "tool_calls": tool_calls},
+                        {"role": "tool", "content": str(tool_result), "name": fn_name},
+                    ]
+
+                    final_response = ollama.chat(
+                        model=model,
+                        messages=messages_with_tool,
+                        options={"temperature": 0.1, "num_predict": 100},
+                    )
+                    final_msg = final_response.get("message", {})
+                    full_response = (
+                        final_msg.get("content", "")
+                        if isinstance(final_msg, dict)
+                        else getattr(final_msg, "content", "")
+                    )
+                    break
+            else:
+                full_response = msg.get("content", "")
+
+            if full_response.strip():
+                break
+
+        except Exception:
+            try:
+                full_response = ""
+                import time
+
+                start = time.time()
+                print("Medi: ", end="", flush=True)
+                for chunk in ollama.chat(
+                    model=model,
+                    messages=messages,
+                    options={"temperature": 0.1, "num_predict": 80},
+                    stream=True,
+                ):
+                    chunk_msg = chunk.get("message", {})
+                    token = (
+                        chunk_msg.get("content", "")
+                        if isinstance(chunk_msg, dict)
+                        else getattr(chunk_msg, "content", "")
+                    )
+                    if token:
+                        print(token, end="", flush=True)
+                        full_response += token
+                    if time.time() - start > 20 and len(full_response) > 10:
+                        break
+                print()
+                if full_response.strip():
+                    break
+            except Exception:
+                continue
 
     import re
 
     full_response = re.sub(r"<think>.*?</think>", "", full_response, flags=re.DOTALL).strip()
-    full_response = re.sub(
-        r"Thinking Process:.*?\.\.\.done thinking\.",
-        "",
-        full_response,
-        flags=re.DOTALL,
-    ).strip()
     full_response = re.sub(r"\*\*|\*|##|#", "", full_response).strip()
 
     history.append({"role": "assistant", "content": full_response})
 
     return {
         "response": full_response,
-        "tool_used": None,
-        "tool_result": None,
+        "tool_used": tool_used,
+        "tool_result": tool_result,
         "history": history,
     }
 
