@@ -168,6 +168,57 @@
       color: #0f0f1a;
     }
 
+    #server-config {
+      background: #111827;
+      border-top: 1px solid #2a2a4a;
+      border-bottom: 1px solid #2a2a4a;
+      padding: 10px 16px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    #server-config label {
+      font-size: 0.78rem;
+      color: #93c5fd;
+      min-width: 140px;
+    }
+
+    #ollama-url {
+      flex: 1;
+      min-width: 220px;
+      background: #0f0f1a;
+      border: 1px solid #2a2a4a;
+      border-radius: 12px;
+      padding: 8px 12px;
+      color: #e0e0e0;
+      font-size: 0.82rem;
+      outline: none;
+    }
+
+    #save-url-btn {
+      padding: 8px 14px;
+      border-radius: 12px;
+      border: 1px solid #2a4a6a;
+      background: #1a2a3a;
+      color: #7eb8f7;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    #save-url-btn:hover {
+      background: #7eb8f7;
+      color: #0f0f1a;
+    }
+
+    #url-hint {
+      width: 100%;
+      font-size: 0.72rem;
+      color: #9ca3af;
+    }
+
     #input-area {
       display: flex;
       padding: 12px 16px;
@@ -296,6 +347,13 @@
   <button onclick="quickAction('referral')">🏥 Referral</button>
 </div>
 
+<div id="server-config">
+  <label for="ollama-url">Custom Ollama URL</label>
+  <input id="ollama-url" type="text" placeholder="https://your-ngrok-url.ngrok-free.app/api/chat" />
+  <button id="save-url-btn" onclick="saveOllamaUrl()">Save URL</button>
+  <div id="url-hint">Use local default or paste your Kaggle/ngrok public Ollama URL here.</div>
+</div>
+
 <div id="input-area">
   <input id="user-input" type="text" placeholder="Describe patient symptoms..." autocomplete="off" />
   <button id="mic-btn" onclick="toggleVoice()" title="Voice input">🎤</button>
@@ -322,7 +380,7 @@
   let recognition = null;
   let isRecording = false;
 
-  const OLLAMA_URL = 'http://localhost:11434/api/chat';
+  const DEFAULT_OLLAMA_URL = 'http://localhost:11434/api/chat';
   const MODELS = ['gemma3:4b', 'gemma4:e4b'];
 
   const SYSTEM_PROMPT = `You are Medi, a warm caring AI health assistant for community health workers globally.
@@ -400,6 +458,28 @@ EMERGENCY: [reason]`;
     if (el) el.remove();
   }
 
+  function getOllamaUrl() {
+    return localStorage.getItem('medivoice_ollama_url') || DEFAULT_OLLAMA_URL;
+  }
+
+  function saveOllamaUrl() {
+    const input = document.getElementById('ollama-url');
+    const value = input.value.trim();
+    if (!value) {
+      localStorage.removeItem('medivoice_ollama_url');
+      input.value = DEFAULT_OLLAMA_URL;
+      alert('Custom URL cleared. Using local Ollama default.');
+      return;
+    }
+
+    localStorage.setItem('medivoice_ollama_url', value);
+    alert('Custom Ollama URL saved.');
+  }
+
+  function loadOllamaUrl() {
+    document.getElementById('ollama-url').value = getOllamaUrl();
+  }
+
   async function sendMessage() {
     const input = document.getElementById('user-input');
     const text = input.value.trim();
@@ -434,7 +514,7 @@ EMERGENCY: [reason]`;
     for (const model of MODELS) {
       payload.model = model;
       try {
-        const res = await fetch(OLLAMA_URL, {
+        const res = await fetch(getOllamaUrl(), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -534,6 +614,7 @@ EMERGENCY: [reason]`;
   });
 
   // ── Init ───────────────────────────────────────────────
+  loadOllamaUrl();
   resetChat();
 </script>
 </body>
