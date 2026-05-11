@@ -2,7 +2,7 @@ import re
 from app.core.gemma_engine import chat, reset
 from app.core.function_caller import run_agent
 from app.core.triage_logic import assess_severity
-from app.core.voice_handler import speak, listen
+from app.core.voice_handler import speak, listen, set_tts_language
 from app.core.image_analyzer import analyze_image
 from app.utils.local_db import init_db, log_visit, get_stats
 
@@ -66,50 +66,51 @@ LANG_DESCRIPTIONS = {
 
 TOOLTIPS = {
     "en": """
-┌─────────────────────────────────────────────────────────┐
-│                    HOW TO USE MEDI                      │
-├────────────────┬────────────────────────────────────────┤
-│ TYPE anything  │ Describe symptoms → Medi asks          │
-│                │ follow-up questions → gives action     │
-├────────────────┼────────────────────────────────────────┤
-│ voice          │ Speak instead of typing. Medi listens  │
-│                │ and responds in your language          │
-├────────────────┼────────────────────────────────────────┤
-│ image <path>   │ Analyze wound/rash photo               │
-│                │ e.g: image C:\\photos\\wound.jpg        │
-├────────────────┼────────────────────────────────────────┤
-│ stats          │ Today's patient summary:               │
-│                │ emergencies, referrals, home care      │
-├────────────────┼────────────────────────────────────────┤
-│ reset          │ Start fresh for a new patient          │
-├────────────────┼────────────────────────────────────────┤
-│ lang           │ Switch to a different language         │
-├────────────────┼────────────────────────────────────────┤
-│ quit           │ Exit Medi                              │
-└────────────────┴────────────────────────────────────────┘
++-------------------------------------------------------+
+|                    HOW TO USE MEDI                    |
++----+---------------+----------------------------------+
+| #  | Command       | What it does                     |
++----+---------------+----------------------------------+
+| 1  | Type anything | Describe symptoms -> Medi asks   |
+|    |               | questions -> gives clear action  |
++----+---------------+----------------------------------+
+| 2  | voice         | Speak instead of typing          |
+|    |               | Medi listens in your language    |
++----+---------------+----------------------------------+
+| 3  | image <path>  | Analyze wound/rash photo         |
+|    |               | e.g: image C:\\photos\\wound.jpg |
++----+---------------+----------------------------------+
+| 4  | stats         | Today's patient summary          |
++----+---------------+----------------------------------+
+| 5  | reset         | New patient - fresh start        |
++----+---------------+----------------------------------+
+| 6  | lang          | Switch language                  |
++----+---------------+----------------------------------+
+| 7  | quit          | Exit Medi                        |
++----+---------------+----------------------------------+
 """,
     "ur-roman": """
-┌─────────────────────────────────────────────────────────┐
-│                  MEDI KAISE CHALAYEIN                   │
-├────────────────┬────────────────────────────────────────┤
-│ Kuch bhi type  │ Symptoms batao → Medi sawaal poochega  │
-│                │ → phir clear action batayega           │
-├────────────────┼────────────────────────────────────────┤
-│ voice          │ Likhne ki bajaye bolein. Medi sunega   │
-│                │ aur apni zaban mein jawab dega         │
-├────────────────┼────────────────────────────────────────┤
-│ image <path>   │ Zakhm/daane ki photo analyze karo      │
-│                │ e.g: image C:\\photos\\zakhm.jpg        │
-├────────────────┼────────────────────────────────────────┤
-│ stats          │ Aaj ke mareez ka summary:              │
-│                │ emergency, referral, ghar pe dekhbhal  │
-├────────────────┼────────────────────────────────────────┤
-│ reset          │ Naye mareez ke liye nai conversation   │
-├────────────────┼────────────────────────────────────────┤
-│ lang           │ Zaban tabdeel karo                     │
-├────────────────┼────────────────────────────────────────┤
-│ quit           │ Medi band karo                         │
-└────────────────┴────────────────────────────────────────┘
++-------------------------------------------------------+
+|                  MEDI KAISE CHALAYEIN                 |
++----+---------------+----------------------------------+
+| #  | Command       | Kya karta hai                    |
++----+---------------+----------------------------------+
+| 1  | Kuch bhi type | Symptoms batao -> Medi sawaal    |
+|    |               | poochega -> action batayega      |
++----+---------------+----------------------------------+
+| 2  | voice         | Likhne ki jagah bolein           |
+|    |               | Medi sunega aur jawab dega       |
++----+---------------+----------------------------------+
+| 3  | image <path>  | Zakhm/daane ki photo analyze     |
++----+---------------+----------------------------------+
+| 4  | stats         | Aaj ke mareez ka summary         |
++----+---------------+----------------------------------+
+| 5  | reset         | Naya mareez shuru karo           |
++----+---------------+----------------------------------+
+| 6  | lang          | Zaban tabdeel karo               |
++----+---------------+----------------------------------+
+| 7  | quit          | Medi band karo                   |
++----+---------------+----------------------------------+
 """,
     "ur": """
 ┌─────────────────────────────────────────────────────────┐
@@ -328,6 +329,7 @@ def run_text_mode():
         print("  Invalid. Enter 1-22.")
 
     print(f"\n  Language set: {lang_name}\n")
+    set_tts_language(lang_code)
     print(greeting)
     print(get_tooltip(lang_code))
 
@@ -346,6 +348,18 @@ def run_text_mode():
 
         cmd = user_input.lower()
 
+        cmd_map = {
+            "2": "voice",
+            "3": "image",
+            "4": "stats",
+            "5": "reset",
+            "6": "lang",
+            "7": "quit",
+        }
+        if cmd in cmd_map:
+            cmd = cmd_map[cmd]
+            user_input = cmd
+
         if cmd == "quit":
             print(get_goodbye(lang_code))
             break
@@ -353,6 +367,7 @@ def run_text_mode():
         elif cmd == "reset":
             reset()
             history = []
+            set_tts_language(lang_code)
             print(f"\n{greeting}\n")
 
         elif cmd == "lang":
@@ -364,6 +379,7 @@ def run_text_mode():
                 reset()
                 history = []
                 print(f"\n  Language set: {lang_name}\n")
+                set_tts_language(lang_code)
                 print(greeting)
                 print(get_tooltip(lang_code))
 
@@ -379,17 +395,19 @@ def run_text_mode():
         elif cmd == "voice":
             print("\n  Listening...")
             user_input = listen()
-            if not user_input or "unavailable" in user_input.lower():
+            if not user_input or not user_input.strip():
                 print("  Could not hear. Try again.")
                 continue
             print(f"  Heard: {user_input}\n")
             result = run_agent(user_input, history)
             history = result["history"]
-            response = clean_response(result["response"])
-            speak(response)
-
-            if is_final_verdict(response):
-                severity = assess_severity(user_input)
+            response = result["response"]
+            severity = assess_severity(user_input)
+            is_verdict = any(kw in response.lower() for kw in [
+                "home care", "refer", "emergency", "hospital",
+                "ghar pe", "clinic", "foran"
+            ])
+            if is_verdict:
                 print(f"\n  [{severity['level']}] {severity['action']}")
                 log_visit(
                     symptoms=user_input,
@@ -408,6 +426,8 @@ def run_text_mode():
                     tool_used=result.get("tool_used"),
                     response=response
                 )
+
+            speak(response)
 
         elif cmd.startswith("image"):
             parts = user_input.split(maxsplit=1)
@@ -421,9 +441,16 @@ def run_text_mode():
         else:
             result = run_agent(user_input, history)
             history = result["history"]
-            response = clean_response(result["response"])
+            response = result["response"]
 
-            if is_final_verdict(response):
+            verdict_keywords = [
+                "home care", "refer", "emergency", "hospital",
+                "ghar pe", "clinic", "foran", "immediately",
+                "go to", "take to", "visit"
+            ]
+            is_verdict = any(kw in response.lower() for kw in verdict_keywords)
+
+            if is_verdict:
                 severity = assess_severity(user_input)
                 print(f"\n  [{severity['level']}] {severity['action']}")
                 log_visit(
@@ -444,7 +471,10 @@ def run_text_mode():
                     response=response
                 )
 
+            speak(response)
+
 
 if __name__ == "__main__":
     _ = chat
     run_text_mode()
+
