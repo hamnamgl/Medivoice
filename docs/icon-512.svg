@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0f0f1a"/>
+  <rect x="48" y="48" width="416" height="416" rx="80" fill="#1a1a2e" stroke="#2a4a6a" stroke-width="10"/>
+  <circle cx="256" cy="244" r="138" fill="#14532d"/>
+  <path d="M256 143c-20 0-37 17-37 37v32h-32c-20 0-37 17-37 37s17 37 37 37h32v32c0 20 17 37 37 37s37-17 37-37v-32h32c20 0 37-17 37-37s-17-37-37-37h-32v-32c0-20-17-37-37-37z" fill="#86efac"/>
+  <text x="256" y="438" font-family="Segoe UI, Arial, sans-serif" font-size="64" font-weight="700" text-anchor="middle" fill="#7eb8f7">MEDI</text>
+</svg>
