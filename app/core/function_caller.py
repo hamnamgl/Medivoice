@@ -9,10 +9,13 @@ import ollama
 from app.core.triage_logic import assess_severity
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
+CUSTOM_DIR = DATA_DIR / "custom"
 REFERRAL_FILES = {
     "pakistan": DATA_DIR / "referrals" / "pk_facilities.json",
 }
 DRUGS_FILE = DATA_DIR / "drugs" / "essential_medicines.json"
+CUSTOM_REFERRALS_FILE = CUSTOM_DIR / "referrals.json"
+CUSTOM_DRUGS_FILE = CUSTOM_DIR / "drugs.json"
 
 TOOLS = [
     {
@@ -81,8 +84,49 @@ def _load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-REFERRAL_DATA = _load_json(REFERRAL_FILES["pakistan"])
-DRUG_DATA = _load_json(DRUGS_FILE)
+def _merge_facility_maps(base: dict, overlay: dict) -> dict:
+    merged = dict(base)
+    for region, cities in overlay.items():
+        existing = dict(merged.get(region, {}))
+        if isinstance(cities, dict):
+            existing.update(cities)
+        merged[region] = existing
+    return merged
+
+
+def _load_referral_data() -> dict:
+    base = _load_json(REFERRAL_FILES["pakistan"])
+    custom = _load_json(CUSTOM_REFERRALS_FILE)
+    if not custom:
+        return base
+
+    merged = dict(base)
+    merged["country"] = custom.get("country", base.get("country", "Custom"))
+    merged["emergency"] = custom.get("emergency", base.get("emergency", "Ask local supervisor"))
+    merged["facilities"] = _merge_facility_maps(
+        base.get("facilities", {}),
+        custom.get("facilities", {}),
+    )
+    return merged
+
+
+def _load_drug_data() -> dict:
+    base = _load_json(DRUGS_FILE)
+    custom = _load_json(CUSTOM_DRUGS_FILE)
+    if not custom:
+        return base
+
+    merged = dict(base)
+    merged["version"] = custom.get("version", base.get("version", "custom"))
+    merged["source"] = custom.get("source", base.get("source", "Custom organization data"))
+    medicines = dict(base.get("medicines", {}))
+    medicines.update(custom.get("medicines", {}))
+    merged["medicines"] = medicines
+    return merged
+
+
+REFERRAL_DATA = _load_referral_data()
+DRUG_DATA = _load_drug_data()
 
 SYSTEM_PROMPT = """You are Medi, a warm caring AI health assistant for community health workers globally.
 

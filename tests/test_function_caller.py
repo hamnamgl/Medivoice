@@ -1,4 +1,5 @@
 import pytest
+from pathlib import Path
 import app.core.function_caller as function_module
 from app.core.function_caller import execute_function, run_agent
 
@@ -62,3 +63,27 @@ def test_run_agent_routes_referral_queries_without_model(monkeypatch):
     result = run_agent("Nearest hospital in Punjab?")
     assert result["tool_used"] == "lookup_referral"
     assert "Punjab" in result["response"] or "Rawalpindi" in result["response"]
+
+
+def test_custom_referral_overlay_merges_regions(monkeypatch, tmp_path):
+    custom_referrals = tmp_path / "referrals.json"
+    custom_referrals.write_text(
+        '{"country":"Custom","emergency":"999","facilities":{"punjab":{"gujranwala":"DHQ Gujranwala - 055"}}}',
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(function_module, "CUSTOM_REFERRALS_FILE", custom_referrals)
+    merged = function_module._load_referral_data()
+    assert merged["facilities"]["punjab"]["gujranwala"] == "DHQ Gujranwala - 055"
+    assert "rawalpindi" in merged["facilities"]["punjab"]
+
+
+def test_custom_drug_overlay_adds_medicine(monkeypatch, tmp_path):
+    custom_drugs = tmp_path / "drugs.json"
+    custom_drugs.write_text(
+        '{"version":"custom","source":"test","medicines":{"testmed":{"fixed_dose":5,"unit":"mg","frequency":"once daily"}}}',
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(function_module, "CUSTOM_DRUGS_FILE", custom_drugs)
+    merged = function_module._load_drug_data()
+    assert merged["medicines"]["testmed"]["fixed_dose"] == 5
+    assert "paracetamol" in merged["medicines"]

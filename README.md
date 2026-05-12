@@ -49,6 +49,31 @@ MediVoice is an **offline-first AI clinical assistant** powered by **Gemma 4 run
 
 ---
 
+## Data Model
+
+MediVoice now uses a **two-layer offline data model**:
+
+- **Core bundled data**: built-in triage rules, baseline referral packs, and essential medicine dosing
+- **Organization custom pack**: optional local overlays for NGO, district, or clinic-specific referrals and approved formulary updates
+
+This is important for CHW deployments because frontline workers should **not** have to edit medical logic themselves. Instead:
+
+- core medical defaults stay bundled with the app
+- supervisors or organizations can add their own local referral files
+- local programs can add approved medicine overrides without rewriting the whole app
+
+Current editable local pack lives in:
+
+- `data/custom/referrals.json`
+- `data/custom/drugs.json`
+- `data/custom/README.md`
+
+Source tracking lives in:
+
+- `data/SOURCES.md`
+
+---
+
 ## 🏆 Hackathon Tracks Targeted
 
 This project targets multiple Gemma 4 Good Hackathon prize tracks:
@@ -78,7 +103,9 @@ MediVoice
 ├── data/
 │   ├── protocols/               # Offline clinical protocols
 │   ├── referrals/               # Country referral directories
-│   └── drugs/                   # Essential medicines dosage data
+│   ├── drugs/                   # Essential medicines dosage data
+│   ├── custom/                  # Organization-specific editable overlays
+│   └── SOURCES.md               # Data provenance and placeholder/verified notes
 ├── fine_tuning/                 # Unsloth fine-tuning scripts
 ├── tests/                       # Test suite
 ├── docs/                        # Technical documentation
@@ -119,6 +146,17 @@ python -m http.server 8080
 # Then open http://localhost:8080 in Chrome
 # Tap "Add to Home Screen" → installed like a native app
 ```
+
+### Custom Local Data Pack
+
+If a ministry, NGO, or clinic network wants to use its own local referral directory, they can edit the files in `data/custom/`.
+
+Examples:
+
+- add district hospitals and supervisor numbers in `data/custom/referrals.json`
+- add approved local formulary overrides in `data/custom/drugs.json`
+
+MediVoice loads built-in offline data first, then applies custom local overlays on top.
 
 ---
 
@@ -218,6 +256,7 @@ To make MediVoice properly production-grade for real field deployment, the archi
 - Version offline protocol and referral datasets
 - Add migration scripts for schema upgrades
 - Add signed update bundles for trusted offline content refresh
+- Distinguish clearly between bundled core medical data and editable organization-specific local packs
 
 ### 5. Reliability and Recovery
 
@@ -257,6 +296,7 @@ In short: **Kaggle proves the demo, but production-grade offline MediVoice means
 - [Deployment Guide](docs/DEPLOYMENT_GUIDE.md)
 - [Impact Report](docs/IMPACT_REPORT.md)
 - [Fine-tuning Guide](docs/FINE_TUNING_GUIDE.md)
+- [Data Sources](data/SOURCES.md)
 
 ---
 
