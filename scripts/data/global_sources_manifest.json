@@ -1,0 +1,29 @@
+{
+  "description": "Starter manifest for public data sources that MediVoice can normalize into offline bundles.",
+  "sources": [
+    {
+      "name": "WHO Essential Medicines Lists",
+      "type": "global_medicines",
+      "url": "https://www.who.int/groups/expert-committee-on-selection-and-use-of-essential-medicines/essential-medicines-lists",
+      "status": "planned"
+    },
+    {
+      "name": "WHO IMCI guidance",
+      "type": "global_protocols",
+      "url": "https://apo.who.int/publications/i/item/9789241506823",
+      "status": "planned"
+    },
+    {
+      "name": "Kenya Master Health Facility Registry",
+      "type": "country_referrals",
+      "url": "https://kmhfr.health.go.ke/public/about",
+      "status": "planned"
+    },
+    {
+      "name": "Pakistan NHSRC downloads",
+      "type": "country_protocols",
+      "url": "https://nhsrc.gov.pk/download",
+      "status": "planned"
+    }
+  ]
+}
