@@ -48,3 +48,17 @@ def test_run_agent_uses_tool_and_returns_final_response(monkeypatch):
     assert "response" in result
     assert isinstance(result["response"], str)
     assert "history" in result
+
+
+def test_run_agent_routes_drug_queries_without_model(monkeypatch):
+    monkeypatch.setattr(function_module, "ollama", DummyOllama())
+    result = run_agent("15kg child - paracetamol dosage?")
+    assert result["tool_used"] == "get_drug_dosage"
+    assert "225 mg" in result["response"]
+
+
+def test_run_agent_routes_referral_queries_without_model(monkeypatch):
+    monkeypatch.setattr(function_module, "ollama", DummyOllama())
+    result = run_agent("Nearest hospital in Punjab?")
+    assert result["tool_used"] == "lookup_referral"
+    assert "Punjab" in result["response"] or "Rawalpindi" in result["response"]
