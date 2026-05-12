@@ -475,9 +475,19 @@ EMERGENCY: [reason]`;
     return localStorage.getItem('medivoice_ollama_url') || DEFAULT_OLLAMA_URL;
   }
 
+  function normalizeOllamaUrl(value) {
+    let normalized = value.trim();
+    if (!normalized) return '';
+    normalized = normalized.replace(/\/+$/, '');
+    if (!normalized.endsWith('/api/chat')) {
+      normalized += '/api/chat';
+    }
+    return normalized;
+  }
+
   function saveOllamaUrl() {
     const input = document.getElementById('ollama-url');
-    const value = input.value.trim();
+    const value = normalizeOllamaUrl(input.value);
     if (!value) {
       localStorage.removeItem('medivoice_ollama_url');
       input.value = DEFAULT_OLLAMA_URL;
@@ -486,6 +496,7 @@ EMERGENCY: [reason]`;
     }
 
     localStorage.setItem('medivoice_ollama_url', value);
+    input.value = value;
     alert('Custom Ollama URL saved.');
   }
 
@@ -511,7 +522,8 @@ EMERGENCY: [reason]`;
       speakText(reply);
     } catch (err) {
       removeTyping();
-      addBubble('⚠️ Could not reach Medi. Make sure Ollama is running locally (ollama serve).', 'medi');
+      console.error('Medi request failed', err);
+      addBubble('⚠️ Could not reach Medi. Check your saved Ollama URL and make sure the Kaggle proxy or local Ollama server is running.', 'medi');
     }
   }
 
