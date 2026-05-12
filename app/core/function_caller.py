@@ -152,6 +152,8 @@ Never ask rating scales. Never ask food/sleep/stress unless relevant."""
 
 DOSAGE_HINTS = ["dosage", "dose", "kitni", "mg", "medicine", "drug", "paracetamol", "amoxicillin", "ors", "zinc", "ibuprofen", "cotrimoxazole"]
 REFERRAL_HINTS = ["hospital", "clinic", "referral", "nearest", "kahan", "where", "facility", "punjab", "sindh", "kpk", "balochistan", "rawalpindi", "lahore", "karachi", "peshawar", "quetta"]
+HAUSA_HINTS = ["yaro", "zazzabi", "majiyyaci", "suma", "jini", "numfashi"]
+ROMAN_URDU_HINTS = ["bach", "mareez", "bukhar", "behosh", "foran", "dast", "ulti", "khansi", "saans"]
 
 
 def _format_drug_dose(drug_name: str, weight_kg: float) -> str:
@@ -223,6 +225,105 @@ def _build_direct_tool_reply(tool_name: str, tool_result: str | dict) -> str:
     return str(tool_result)
 
 
+def _detect_language(text: str) -> str:
+    if re.search(r"[\u0600-\u06FF]", text):
+        return "ur"
+    text_lower = text.lower()
+    if any(hint in text_lower for hint in HAUSA_HINTS):
+        return "ha"
+    if any(hint in text_lower for hint in ROMAN_URDU_HINTS):
+        return "ur-roman"
+    return "en"
+
+
+def _has_duration(text: str) -> bool:
+    text_lower = text.lower()
+    return bool(
+        re.search(r"\b\d+\s*(day|days|week|weeks|din|hafta|haftay)\b", text_lower)
+        or "since" in text_lower
+        or "se " in text_lower
+    )
+
+
+def _choose_symptom_question(text: str, lang: str) -> str:
+    text_lower = text.lower()
+    if "pregnan" in text_lower or "hamal" in text_lower:
+        prompts = {
+            "en": "Is there bleeding, severe headache, or swelling?",
+            "ur-roman": "Kya bleeding, shadeed sar dard, ya soojan hai?",
+            "ha": "Akwai zubar jini, ciwon kai mai tsanani, ko kumburi?",
+        }
+    elif any(word in text_lower for word in ["dast", "diarr", "loose stool", "stool"]):
+        prompts = {
+            "en": "Is the patient drinking fluids and is there blood in the stool?",
+            "ur-roman": "Kya mareez pani pee raha hai aur kya dast mein khoon hai?",
+            "ha": "Majiyyacin na shan ruwa, kuma akwai jini a bayan gida?",
+        }
+    elif any(word in text_lower for word in ["saans", "breath", "cough", "khansi", "numfashi"]):
+        prompts = {
+            "en": "Is there fast breathing, chest pain, or chest indrawing?",
+            "ur-roman": "Kya saans tez hai, seenay mein dard hai, ya seena dhans raha hai?",
+            "ha": "Numfashi yana sauri, akwai ciwon kirji, ko kirji na nutsewa?",
+        }
+    else:
+        prompts = {
+            "en": "Is there fever, vomiting, diarrhea, or is the patient not eating?",
+            "ur-roman": "Kya bukhar, ulti, dast, ya na khane ki shikayat hai?",
+            "ha": "Akwai zazzabi, amai, gudawa, ko mara lafiyan baya cin abinci?",
+        }
+    return prompts.get(lang, prompts["en"])
+
+
+def _danger_sign_question(lang: str) -> str:
+    prompts = {
+        "en": "Is the patient unconscious, not breathing well, bleeding heavily, or unable to drink?",
+        "ur-roman": "Kya mareez behosh hai, saans mein mushkil hai, zyada khoon beh raha hai, ya pani nahi pee raha?",
+        "ha": "Majiyyacin a sume yake, numfashi na wahala, jini na fita sosai, ko ba zai iya sha ba?",
+    }
+    return prompts.get(lang, prompts["en"])
+
+
+def _duration_question(lang: str) -> str:
+    prompts = {
+        "en": "How long has this been happening?",
+        "ur-roman": "Yeh masla kitne arsay se hai?",
+        "ha": "Tun yaushe wannan yake faruwa?",
+    }
+    return prompts.get(lang, prompts["en"])
+
+
+def _acknowledge(lang: str) -> str:
+    prompts = {
+        "en": "I am sorry the patient is unwell.",
+        "ur-roman": "Mujhe afsos hai ke mareez theek mehsoos nahi kar raha.",
+        "ha": "Yi hakuri, majiyyacin baya jin dadi.",
+    }
+    return prompts.get(lang, prompts["en"])
+
+
+def _verdict_from_severity(result: dict, lang: str) -> str:
+    if lang == "ur-roman":
+        mapped = {
+            "EMERGENCY": f"EMERGENCY: {result['message']}",
+            "REFER": f"REFER TO CLINIC: {result['message']}",
+            "HOME CARE": f"HOME CARE: {result['message']}",
+        }
+        return mapped[result["level"]]
+    if lang == "ha":
+        mapped = {
+            "EMERGENCY": "EMERGENCY: Wannan alamar hadari ce. A kai asibiti nan da nan.",
+            "REFER": "REFER TO CLINIC: A kai majiyyacin asibiti ko cibiya a yau.",
+            "HOME CARE": "HOME CARE: A kula a gida, amma a kai asibiti idan ya kara tsananta.",
+        }
+        return mapped[result["level"]]
+    mapped = {
+        "EMERGENCY": "EMERGENCY: This is dangerous and needs immediate hospital care.",
+        "REFER": "REFER TO CLINIC: This case should be reviewed at a clinic today.",
+        "HOME CARE": "HOME CARE: Home care is reasonable for now, but seek help if symptoms worsen.",
+    }
+    return mapped[result["level"]]
+
+
 def execute_function(name: str, arguments: dict) -> str:
     """Gemma 4 ne jo function call kiya usse execute karo."""
     if name == "assess_triage":
@@ -247,6 +348,7 @@ def run_agent(user_message: str, history: list = None) -> dict:
 
     history.append({"role": "user", "content": user_message})
     messages = [{"role": "system", "content": SYSTEM_PROMPT}] + history
+    language = _detect_language(user_message)
 
     models_to_try = ["gemma3:4b", "gemma4:e4b"]
     full_response = ""
@@ -271,6 +373,63 @@ def run_agent(user_message: str, history: list = None) -> dict:
             "response": full_response,
             "tool_used": tool_used,
             "tool_result": tool_result,
+            "history": history,
+        }
+
+    all_user_text = " ".join(item["content"] for item in history if item["role"] == "user")
+    user_turns = sum(1 for item in history if item["role"] == "user")
+    severity_now = assess_severity(all_user_text)
+
+    if severity_now["level"] == "EMERGENCY":
+        full_response = _verdict_from_severity(severity_now, language)
+        history.append({"role": "assistant", "content": full_response})
+        return {
+            "response": full_response,
+            "tool_used": "assess_triage",
+            "tool_result": severity_now,
+            "history": history,
+        }
+
+    if user_turns == 1:
+        if not _has_duration(user_message):
+            full_response = f"{_acknowledge(language)} {_duration_question(language)}"
+        else:
+            full_response = f"{_acknowledge(language)} {_choose_symptom_question(all_user_text, language)}"
+        history.append({"role": "assistant", "content": full_response})
+        return {
+            "response": full_response,
+            "tool_used": None,
+            "tool_result": None,
+            "history": history,
+        }
+
+    if user_turns == 2:
+        full_response = _choose_symptom_question(all_user_text, language)
+        history.append({"role": "assistant", "content": full_response})
+        return {
+            "response": full_response,
+            "tool_used": None,
+            "tool_result": None,
+            "history": history,
+        }
+
+    if user_turns == 3:
+        full_response = _danger_sign_question(language)
+        history.append({"role": "assistant", "content": full_response})
+        return {
+            "response": full_response,
+            "tool_used": None,
+            "tool_result": None,
+            "history": history,
+        }
+
+    if user_turns >= 4:
+        full_response = _verdict_from_severity(severity_now, language)
+        history.append({"role": "assistant", "content": full_response})
+        return {
+            "response": full_response,
+            "tool_used": "assess_triage",
+            "tool_result": severity_now,
             "history": history,
         }
 

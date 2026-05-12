@@ -1,5 +1,23 @@
 {
   "country": "Nigeria",
   "program": "CHEW",
-  "referral_triggers": ["maternal danger signs", "severe dehydration"]
+  "version": "structured-demo-v1",
+  "referral_triggers": [
+    "maternal danger signs",
+    "severe dehydration",
+    "persistent fever",
+    "fast breathing",
+    "not eating"
+  ],
+  "danger_signs": [
+    "suma",
+    "numfashi baya",
+    "jini mai yawa",
+    "ba zai sha ba"
+  ],
+  "home_care_examples": [
+    "mild fever less than 3 days",
+    "cough without danger signs",
+    "mild diarrhea with good drinking"
+  ]
 }

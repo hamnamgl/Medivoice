@@ -65,6 +65,34 @@ def test_run_agent_routes_referral_queries_without_model(monkeypatch):
     assert "Punjab" in result["response"] or "Rawalpindi" in result["response"]
 
 
+def test_run_agent_first_turn_asks_duration(monkeypatch):
+    monkeypatch.setattr(function_module, "ollama", DummyOllama())
+    result = run_agent("I am feeling sick", [])
+    assert result["tool_used"] is None
+    assert "how long" in result["response"].lower()
+
+
+def test_run_agent_third_turn_asks_danger_sign(monkeypatch):
+    monkeypatch.setattr(function_module, "ollama", DummyOllama())
+    history = []
+    result = run_agent("I am sick", history)
+    history = result["history"]
+    result = run_agent("for 1 week", history)
+    history = result["history"]
+    result = run_agent("fever", history)
+    assert "unconscious" in result["response"].lower() or "bleeding" in result["response"].lower()
+
+
+def test_run_agent_fourth_turn_returns_verdict(monkeypatch):
+    monkeypatch.setattr(function_module, "ollama", DummyOllama())
+    history = []
+    for text in ["I am sick", "for 1 week", "fever", "no bleeding"]:
+        result = run_agent(text, history)
+        history = result["history"]
+    assert result["tool_used"] == "assess_triage"
+    assert result["response"].startswith(("HOME CARE:", "REFER TO CLINIC:", "EMERGENCY:"))
+
+
 def test_custom_referral_overlay_merges_regions(monkeypatch, tmp_path):
     custom_referrals = tmp_path / "referrals.json"
     custom_referrals.write_text(

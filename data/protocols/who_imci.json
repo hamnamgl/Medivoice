@@ -1,5 +1,65 @@
 {
   "name": "WHO IMCI",
-  "version": "starter",
-  "conditions": ["fever", "diarrhea", "respiratory distress"]
+  "version": "structured-demo-v1",
+  "scope": "child illness triage starter pack",
+  "danger_signs": [
+    "unconscious",
+    "convulsions",
+    "unable to drink",
+    "not breathing",
+    "vomiting everything"
+  ],
+  "conditions": {
+    "fever": {
+      "ask": [
+        "How many days has the fever been present?",
+        "Is the child drinking and eating?",
+        "Is there any convulsion or unconsciousness?"
+      ],
+      "refer_if": [
+        "fever for 3 days or more",
+        "not drinking",
+        "not eating"
+      ],
+      "emergency_if": [
+        "convulsions",
+        "unconscious",
+        "stiff neck"
+      ]
+    },
+    "diarrhea": {
+      "ask": [
+        "Is there blood in stool?",
+        "Can the patient drink?",
+        "How many days has diarrhea continued?"
+      ],
+      "refer_if": [
+        "blood in stool",
+        "diarrhea for 3 days or more",
+        "vomiting all fluids"
+      ],
+      "emergency_if": [
+        "sunken eyes severe",
+        "unable to drink",
+        "unconscious"
+      ]
+    },
+    "cough_breathing": {
+      "ask": [
+        "Is breathing fast?",
+        "Is there chest indrawing?",
+        "Is the patient unable to drink?"
+      ],
+      "refer_if": [
+        "fast breathing",
+        "chest indrawing",
+        "persistent cough"
+      ],
+      "emergency_if": [
+        "not breathing",
+        "blue lips",
+        "unconscious"
+      ]
+    }
+  }
 }

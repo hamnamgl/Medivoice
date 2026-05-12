@@ -1,5 +1,29 @@
 {
   "country": "Pakistan",
   "program": "Lady Health Worker",
-  "referral_triggers": ["bleeding", "unconscious", "high fever"]
+  "version": "structured-demo-v1",
+  "referral_triggers": [
+    "bleeding",
+    "unconscious",
+    "high fever for 3 days",
+    "not eating",
+    "fast breathing"
+  ],
+  "maternal_danger_signs": [
+    "heavy bleeding",
+    "severe headache",
+    "fits",
+    "swelling with danger signs"
+  ],
+  "child_danger_signs": [
+    "behosh",
+    "saans nahi",
+    "tez bukhar 3 din",
+    "pani na peena"
+  ],
+  "home_care_examples": [
+    "mild cough without danger signs",
+    "short fever with good drinking",
+    "minor rash without fever"
+  ]
 }

@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+import json
+import re
+from pathlib import Path
+
+DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "protocols"
+GENERIC_TRIAGE = json.loads((DATA_DIR / "generic_triage.json").read_text(encoding="utf-8"))
+
 EMERGENCY_KEYWORDS = [
     "bेहosh",
     "बेहोश",
@@ -36,7 +43,32 @@ REFER_KEYWORDS = [
     "pregnancy",
     "حمل",
     "hamal",
+    "difficulty breathing",
+    "fast breathing",
+    "chest pain",
+    "week",
+    "1 week",
+    "7 days",
 ]
+
+
+def _contains_any(text: str, items: list[str]) -> bool:
+    text_lower = text.lower()
+    return any(item.lower() in text_lower for item in items)
+
+
+def _has_long_duration(text: str) -> bool:
+    text_lower = text.lower()
+    patterns = [
+        r"\b[4-9]\s*days?\b",
+        r"\b[1-9]\d\s*days?\b",
+        r"\b1\s*week\b",
+        r"\ba week\b",
+        r"\bhaft",
+        r"\bhafte\b",
+        r"\bweek\b",
+    ]
+    return any(re.search(pattern, text_lower) for pattern in patterns)
 
 
 def assess_severity(text: str) -> dict:
@@ -45,6 +77,8 @@ def assess_severity(text: str) -> dict:
     Returns: {level, action, message}
     """
     text_lower = text.lower()
+    emergency_signs = GENERIC_TRIAGE.get("emergency_signs", [])
+    refer_signs = GENERIC_TRIAGE.get("refer_signs", [])
 
     for keyword in EMERGENCY_KEYWORDS:
         if keyword.lower() in text_lower:
@@ -54,6 +88,13 @@ def assess_severity(text: str) -> dict:
                 "message": "Yeh emergency hai. Foran hospital le jayen. Deri mat karein.",
             }
 
+    if _contains_any(text_lower, emergency_signs):
+        return {
+            "level": "EMERGENCY",
+            "action": "FORAN HOSPITAL",
+            "message": "Danger signs mojood hain. Foran hospital ya emergency care ki zarurat hai.",
+        }
+
     for keyword in REFER_KEYWORDS:
         if keyword.lower() in text_lower:
             return {
@@ -61,6 +102,13 @@ def assess_severity(text: str) -> dict:
                 "action": "CLINIC REFER KAREIN",
                 "message": "Is case mein clinic jana zaroori hai. Aaj hi le jayen.",
             }
+
+    if _contains_any(text_lower, refer_signs) or _has_long_duration(text_lower):
+        return {
+            "level": "REFER",
+            "action": "CLINIC REFER KAREIN",
+            "message": "Yeh case protocol ke mutabiq clinic review mangta hai. Aaj hi dikhayen.",
+        }
 
     return {
         "level": "HOME CARE",

@@ -1,5 +1,22 @@
 {
   "country": "Ethiopia",
   "program": "HEW",
-  "referral_triggers": ["malnutrition warning", "respiratory distress"]
+  "version": "structured-demo-v1",
+  "referral_triggers": [
+    "malnutrition warning",
+    "respiratory distress",
+    "persistent fever",
+    "severe diarrhea"
+  ],
+  "danger_signs": [
+    "unconscious",
+    "unable to drink",
+    "not breathing",
+    "severe wasting"
+  ],
+  "home_care_examples": [
+    "short mild fever",
+    "minor cough without chest indrawing",
+    "feeding well and alert"
+  ]
 }
