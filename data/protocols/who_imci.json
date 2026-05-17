@@ -2,6 +2,10 @@
   "name": "WHO IMCI",
   "version": "structured-demo-v1",
   "scope": "child illness triage starter pack",
+  "source": "WHO IMCI chart booklet",
+  "source_url": "https://apo.who.int/publications/i/item/9789241506823",
+  "source_snapshot": "data/source_snapshots/who_imci_2014.json",
+  "status": "starter_protocol_from_official_source",
   "danger_signs": [
     "unconscious",
     "convulsions",

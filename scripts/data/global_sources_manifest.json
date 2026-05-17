@@ -1,29 +1,31 @@
 {
-  "description": "Starter manifest for public data sources that MediVoice can normalize into offline bundles.",
+  "description": "Source manifest for official public references that MediVoice tracks and converts into offline-friendly snapshots.",
+  "generated_files": [
+    "data/source_snapshots/who_essential_medicines_2025.json",
+    "data/source_snapshots/who_imci_2014.json",
+    "data/source_snapshots/official_referral_registries.json"
+  ],
   "sources": [
     {
-      "name": "WHO Essential Medicines Lists",
-      "type": "global_medicines",
-      "url": "https://www.who.int/groups/expert-committee-on-selection-and-use-of-essential-medicines/essential-medicines-lists",
-      "status": "planned"
+      "id": "who_eml_2025",
+      "output": "data/source_snapshots/who_essential_medicines_2025.json",
+      "status": "imported_snapshot",
+      "source_url": "https://www.who.int/publications/i/item/B09474",
+      "snapshot_kind": "metadata_only"
     },
     {
-      "name": "WHO IMCI guidance",
-      "type": "global_protocols",
-      "url": "https://apo.who.int/publications/i/item/9789241506823",
-      "status": "planned"
+      "id": "who_imci_2014",
+      "output": "data/source_snapshots/who_imci_2014.json",
+      "status": "imported_snapshot",
+      "source_url": "https://apo.who.int/publications/i/item/9789241506823",
+      "snapshot_kind": "metadata_only"
     },
     {
-      "name": "Kenya Master Health Facility Registry",
-      "type": "country_referrals",
-      "url": "https://kmhfr.health.go.ke/public/about",
-      "status": "planned"
-    },
-    {
-      "name": "Pakistan NHSRC downloads",
-      "type": "country_protocols",
-      "url": "https://nhsrc.gov.pk/download",
-      "status": "planned"
+      "id": "official_referral_registries",
+      "output": "data/source_snapshots/official_referral_registries.json",
+      "status": "imported_snapshot",
+      "source_url": null,
+      "snapshot_kind": "catalog"
     }
   ]
 }

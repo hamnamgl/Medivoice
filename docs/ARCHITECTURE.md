@@ -23,6 +23,7 @@ MediVoice is organized into four major layers:
 - `data/protocols/`: bundled clinical starter packs
 - `data/drugs/`: offline dosage references
 - `data/referrals/`: bundled referral packs
+- `data/source_snapshots/`: official-source provenance snapshots
 - `data/custom/`: organization-specific overlays
 - `data/medivoice.db`: visit and settings storage
 
@@ -56,7 +57,8 @@ This keeps the deployment aligned with the offline-first requirement.
 The organization overlay pattern is:
 
 1. core bundled data loads first
-2. `data/custom/*.json` is loaded second
-3. local overlay values are merged on top
+2. official-source snapshots remain separate for provenance
+3. `data/custom/*.json` is loaded second for runtime overrides
+4. local overlay values are merged on top
 
 This lets local health programs adapt operational details without changing the whole application.

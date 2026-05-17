@@ -1,0 +1,43 @@
+{
+  "source_id": "official_referral_registries",
+  "snapshot_kind": "catalog",
+  "entries": [
+    {
+      "country": "Kenya",
+      "registry_name": "Kenya Master Health Facility Registry",
+      "status": "official_registry_catalogued",
+      "source_url": "https://kmhfr.health.go.ke/public/about",
+      "api_docs_url": "https://mfl-api-docs.readthedocs.io/en/latest",
+      "owner": "Republic of Kenya, Ministry of Health",
+      "notes": [
+        "The official about page says KMHFR contains all health facilities and community units in Kenya.",
+        "The page also says KMHFR provides a RESTful API for developers.",
+        "MediVoice does not yet bundle a full Kenya facility extract."
+      ]
+    },
+    {
+      "country": "Nigeria",
+      "registry_name": "Nigeria Health Facility Registry",
+      "status": "official_registry_catalogued",
+      "source_url": "https://hfr.health.gov.ng/about-us",
+      "owner": "Federal Ministry of Health and Social Welfare, Nigeria",
+      "notes": [
+        "The about page says the HFR was developed in 2017 to dynamically manage the Master Health Facility List.",
+        "The public site exposes Facilities List and Data Downloads sections.",
+        "MediVoice does not yet bundle a full Nigeria facility extract."
+      ]
+    },
+    {
+      "country": "Pakistan",
+      "registry_name": "NHSRC downloads and health facility policy documents",
+      "status": "official_document_catalogued",
+      "source_url": "https://www.nhsrc.gov.pk/download",
+      "owner": "Ministry of National Health Services, Regulations and Coordination",
+      "notes": [
+        "The downloads page contains official advisories, policies, and health-facility related publications.",
+        "MediVoice currently uses a curated Pakistan referral starter pack, not a ministry export.",
+        "This source is catalogued for future normalization of official Pakistan reference material."
+      ]
+    }
+  ]
+}

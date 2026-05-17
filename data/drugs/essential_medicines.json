@@ -1,6 +1,13 @@
 {
-  "version": "1.0",
-  "source": "WHO Essential Medicines List 2024",
+  "version": "1.1",
+  "source": "WHO Model List of Essential Medicines, 24th list (2025)",
+  "source_url": "https://www.who.int/publications/i/item/B09474",
+  "source_snapshot": "data/source_snapshots/who_essential_medicines_2025.json",
+  "status": "curated_subset_from_official_source",
+  "notes": [
+    "This is a small offline dosing subset curated for MediVoice triage flows.",
+    "The full WHO 2025 EML is much larger and should be normalized separately before field deployment."
+  ],
   "medicines": {
     "paracetamol": {
       "dose_per_kg": 15,

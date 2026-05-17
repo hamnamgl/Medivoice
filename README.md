@@ -32,6 +32,7 @@ Current project goals:
 | SQLite visit logging | Working |
 | Image triage prompt + fallback | Working |
 | Custom local organization data pack | Working |
+| Official source snapshots in repo | Working |
 | Fully verified worldwide medical dataset | Not yet complete |
 
 ## Data Model
@@ -80,6 +81,7 @@ medivoice/
 |   |-- protocols/
 |   |-- referrals/
 |   |-- drugs/
+|   |-- source_snapshots/
 |   |-- custom/
 |   `-- SOURCES.md
 |-- docs/
@@ -148,6 +150,7 @@ Supporting scripts and notes:
 - `scripts/data/README.md`
 - `scripts/data/fetch_global_sources.py`
 - `scripts/data/global_sources_manifest.json`
+- `data/source_snapshots/`
 - `data/SOURCES.md`
 
 ## Testing

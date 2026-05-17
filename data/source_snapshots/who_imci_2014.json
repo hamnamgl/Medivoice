@@ -1,0 +1,23 @@
+{
+  "source_id": "who_imci_2014",
+  "title": "IMCI chart booklet",
+  "publisher": "World Health Organization",
+  "publication_date": "2014-06-15",
+  "document_type": "Publication",
+  "isbn": "978 92 4 150682 3",
+  "source_url": "https://apo.who.int/publications/i/item/9789241506823",
+  "download_url": "https://iris.who.int/",
+  "snapshot_kind": "metadata_only",
+  "scope": {
+    "audience": "Doctors, nurses and health professionals caring for sick children under five",
+    "sections": [
+      "Sick child aged 2 months to 5 years",
+      "Sick young infant aged up to 2 months"
+    ]
+  },
+  "notes": [
+    "The publication page says the booklet reflects technical updates published in 2012.",
+    "MediVoice currently uses a starter JSON protocol derived from IMCI concepts, not a full chart-by-chart conversion.",
+    "This snapshot anchors the current WHO source for future structured extraction work."
+  ]
+}

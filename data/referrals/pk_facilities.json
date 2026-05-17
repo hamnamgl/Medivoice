@@ -1,6 +1,12 @@
 {
   "country": "Pakistan",
   "last_updated": "2026-01",
+  "status": "curated_demo_pack",
+  "official_source_catalog": "data/source_snapshots/official_referral_registries.json",
+  "notes": [
+    "This is a curated Pakistan starter pack for offline demo and local testing.",
+    "It is not yet a full ministry registry export."
+  ],
   "facilities": {
     "punjab": {
       "rawalpindi": "District Headquarters Hospital Rawalpindi - 051-9270330",

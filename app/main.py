@@ -1,480 +1,263 @@
-import re
-from app.core.gemma_engine import chat, reset
+from __future__ import annotations
+
+from dataclasses import dataclass
+
 from app.core.function_caller import run_agent
-from app.core.triage_logic import assess_severity
-from app.core.voice_handler import speak, listen, set_tts_language
-from app.core.image_analyzer import analyze_image
-from app.utils.local_db import init_db, log_visit, get_stats
+from app.core.gemma_engine import reset
+from app.utils.local_db import get_recent_visits, get_stats, init_db, log_visit
+
 
 BANNER = """
-╔══════════════════════════════════════════════════════╗
-║                    MEDI v1.0                         ║
-║     Offline AI Copilot for Frontline Health Workers  ║
-║          Powered by Gemma 4 — No Internet Needed     ║
-╚══════════════════════════════════════════════════════╝
++--------------------------------------------------------------+
+|                        MediVoice CLI                         |
+|    Offline AI support for frontline community health work    |
++--------------------------------------------------------------+
 """
 
-LANGUAGES = {
-    "1":  ("English",    "en",       "Hello! I am Medi. Tell me about your patient."),
-    "2":  ("Roman Urdu", "ur-roman", "Assalam! Main Medi hun. Apne mareez ke baare mein batayen."),
-    "3":  ("اردو",       "ur",       "السلام علیکم! میں میڈی ہوں۔ اپنے مریض کے بارے میں بتائیں۔"),
-    "4":  ("हिंदी",      "hi",       "नमस्ते! मैं Medi हूँ। अपने मरीज़ के बारे में बताएं।"),
-    "5":  ("Hausa",      "ha",       "Sannu! Ni ne Medi. Gaya min game da majiyyacinka."),
-    "6":  ("Swahili",    "sw",       "Habari! Mimi ni Medi. Niambie kuhusu mgonjwa wako."),
-    "7":  ("Français",   "fr",       "Bonjour! Je suis Medi. Parlez-moi de votre patient."),
-    "8":  ("বাংলা",      "bn",       "হ্যালো! আমি Medi। আপনার রোগী সম্পর্কে বলুন।"),
-    "9":  ("Tagalog",    "tl",       "Kamusta! Ako si Medi. Sabihin sa akin ang tungkol sa iyong pasyente."),
-    "10": ("አማርኛ",       "am",       "ሰላም! እኔ Medi ነኝ። ስለ ታካሚዎ ይንገሩኝ።"),
-    "11": ("پښتو",       "ps",       "سلام! زه Medi یم. د خپل ناروغ په اړه راته ووایاست."),
-    "12": ("Soomaali",   "so",       "Salaam! Aniga waxaan ahay Medi. Igu warran bukaankaaga."),
-    "13": ("Português",  "pt",       "Olá! Eu sou Medi. Fale-me sobre seu paciente."),
-    "14": ("Español",    "es",       "¡Hola! Soy Medi. Háblame de tu paciente."),
-    "15": ("Indonesian", "id",       "Halo! Saya Medi. Ceritakan tentang pasien Anda."),
-    "16": ("Yoruba",     "yo",       "Ẹ káàbọ̀! Èmi ni Medi. Sọ fún mi nípa ọmọ aláìsàn rẹ."),
-    "17": ("Igbo",       "ig",       "Nnọọ! Abụ m Medi. Gwa m maka ọrịa gị."),
-    "18": ("Zulu",       "zu",       "Sawubona! Ngi-Medi. Ngixoxele ngegula lakho."),
-    "19": ("Tigrinya",   "ti",       "ሰላም! ኣነ Medi እየ። ብዛዕባ ሕሙምካ ንገረኒ።"),
-    "20": ("Burmese",    "my",       "မင်္ဂလာပါ! ကျွန်တော် Medi ပါ။ လူနာအကြောင်း ပြောပြပါ။"),
-    "21": ("Khmer",      "km",       "សួស្តី! ខ្ញុំជា Medi។ សូមប្រាប់ខ្ញុំអំពីអ្នកជំងឺ។"),
-    "22": ("Nepali",     "ne",       "नमस्ते! म Medi हुँ। आफ्नो बिरामीको बारेमा बताउनुस्।"),
-}
+HELP_TEXT = """
+Commands
+  help             Show this help
+  voice            Record from microphone, then run triage
+  image <path>     Analyze a wound/rash/burn image
+  stats            Show local visit totals
+  recent           Show recent local visits
+  reset            Start a new patient conversation
+  lang             Change language
+  quit             Exit the CLI
 
-LANG_DESCRIPTIONS = {
-    "en":       "Clinical guidance — Global / English",
-    "ur-roman": "Roman Urdu mein madad — Pakistan/India",
-    "ur":       "اردو میں طبی رہنمائی — پاکستان",
-    "hi":       "हिंदी में मार्गदर्शन — भारत",
-    "ha":       "Taimako na likitanci — Najeriya/Nijar/Ghana",
-    "sw":       "Mwongozo wa afya — Afrika Mashariki",
-    "fr":       "Conseils médicaux — Afrique Occidentale/Haiti",
-    "bn":       "চিকিৎসা নির্দেশিকা — বাংলাদেশ/ভারত",
-    "tl":       "Gabay sa kalusugan — Pilipinas",
-    "am":       "የጤና መመሪያ — ኢትዮጵያ",
-    "ps":       "د روغتیا لارښود — افغانستان/پاکستان",
-    "so":       "Hagaajinta caafimaadka — Soomaaliya",
-    "pt":       "Orientação clínica — Moçambique/Angola/Brasil",
-    "es":       "Orientación clínica — América Latina",
-    "id":       "Panduan kesehatan — Indonesia/Malaysia",
-    "yo":       "Itọsọna ilera — Naijiria/Benin/Togo",
-    "ig":       "Nduzi ahụike — Naịjịrịa",
-    "zu":       "Iseluleko sezempilo — Ningizimu Afrika",
-    "ti":       "ምርሻን ሕሙም — ኤርትራ/ኢትዮጵያ",
-    "my":       "ကျန်းမာရေး လမ်းညွှန် — မြန်မာ",
-    "km":       "ការណែនាំសុខភាព — កម្ពុជា",
-    "ne":       "स्वास्थ्य मार्गदर्शन — नेपाल",
-}
-
-TOOLTIPS = {
-    "en": """
-+-------------------------------------------------------+
-|                    HOW TO USE MEDI                    |
-+----+---------------+----------------------------------+
-| #  | Command       | What it does                     |
-+----+---------------+----------------------------------+
-| 1  | Type anything | Describe symptoms -> Medi asks   |
-|    |               | questions -> gives clear action  |
-+----+---------------+----------------------------------+
-| 2  | voice         | Speak instead of typing          |
-|    |               | Medi listens in your language    |
-+----+---------------+----------------------------------+
-| 3  | image <path>  | Analyze wound/rash photo         |
-|    |               | e.g: image C:\\photos\\wound.jpg |
-+----+---------------+----------------------------------+
-| 4  | stats         | Today's patient summary          |
-+----+---------------+----------------------------------+
-| 5  | reset         | New patient - fresh start        |
-+----+---------------+----------------------------------+
-| 6  | lang          | Switch language                  |
-+----+---------------+----------------------------------+
-| 7  | quit          | Exit Medi                        |
-+----+---------------+----------------------------------+
-""",
-    "ur-roman": """
-+-------------------------------------------------------+
-|                  MEDI KAISE CHALAYEIN                 |
-+----+---------------+----------------------------------+
-| #  | Command       | Kya karta hai                    |
-+----+---------------+----------------------------------+
-| 1  | Kuch bhi type | Symptoms batao -> Medi sawaal    |
-|    |               | poochega -> action batayega      |
-+----+---------------+----------------------------------+
-| 2  | voice         | Likhne ki jagah bolein           |
-|    |               | Medi sunega aur jawab dega       |
-+----+---------------+----------------------------------+
-| 3  | image <path>  | Zakhm/daane ki photo analyze     |
-+----+---------------+----------------------------------+
-| 4  | stats         | Aaj ke mareez ka summary         |
-+----+---------------+----------------------------------+
-| 5  | reset         | Naya mareez shuru karo           |
-+----+---------------+----------------------------------+
-| 6  | lang          | Zaban tabdeel karo               |
-+----+---------------+----------------------------------+
-| 7  | quit          | Medi band karo                   |
-+----+---------------+----------------------------------+
-""",
-    "ur": """
-┌─────────────────────────────────────────────────────────┐
-│                   میڈی کیسے چلائیں                     │
-├────────────────┬────────────────────────────────────────┤
-│ کچھ بھی لکھیں  │ علامات بتائیں ← میڈی سوال پوچھے گا   │
-│                │ پھر واضح ہدایت دے گا                  │
-├────────────────┼────────────────────────────────────────┤
-│ voice          │ بولیں — ٹائپ کی ضرورت نہیں            │
-│                │ میڈی سنے گا اور اپنی زبان میں جواب دے │
-├────────────────┼────────────────────────────────────────┤
-│ image          │ زخم یا دانے کی تصویر تجزیہ کریں       │
-├────────────────┼────────────────────────────────────────┤
-│ stats          │ آج کے مریضوں کا خلاصہ دیکھیں          │
-├────────────────┼────────────────────────────────────────┤
-│ reset          │ نئے مریض کے لیے نئی گفتگو              │
-├────────────────┼────────────────────────────────────────┤
-│ lang           │ زبان تبدیل کریں                        │
-├────────────────┼────────────────────────────────────────┤
-│ quit           │ میڈی بند کریں                          │
-└────────────────┴────────────────────────────────────────┘
-""",
-    "ha": """
-┌─────────────────────────────────────────────────────────┐
-│                YADDA AKE AMFANI DA MEDI                 │
-├────────────────┬────────────────────────────────────────┤
-│ Rubuta kome    │ Bayyana alamu → Medi zai tambaya        │
-│                │ → sannan ya ba da umurni               │
-├────────────────┼────────────────────────────────────────┤
-│ voice          │ Yi magana maimakon rubuta               │
-├────────────────┼────────────────────────────────────────┤
-│ image          │ Dauki hoto na rauni ko kurji            │
-├────────────────┼────────────────────────────────────────┤
-│ stats          │ Duba takaitaccen bayani na yau          │
-├────────────────┼────────────────────────────────────────┤
-│ reset          │ Fara sabo don sabon majiyyaci           │
-├────────────────┼────────────────────────────────────────┤
-│ lang           │ Canza harshe                            │
-├────────────────┼────────────────────────────────────────┤
-│ quit           │ Rufe Medi                              │
-└────────────────┴────────────────────────────────────────┘
-""",
-    "sw": """
-┌─────────────────────────────────────────────────────────┐
-│               JINSI YA KUTUMIA MEDI                     │
-├────────────────┬────────────────────────────────────────┤
-│ Andika chochote│ Elezea dalili → Medi atauliza maswali  │
-│                │ → kisha atoa hatua                     │
-├────────────────┼────────────────────────────────────────┤
-│ voice          │ Sema badala ya kuandika                 │
-├────────────────┼────────────────────────────────────────┤
-│ image          │ Changanua picha ya jeraha au upele      │
-├────────────────┼────────────────────────────────────────┤
-│ stats          │ Ona muhtasari wa wagonjwa wa leo        │
-├────────────────┼────────────────────────────────────────┤
-│ reset          │ Anza upya kwa mgonjwa mpya              │
-├────────────────┼────────────────────────────────────────┤
-│ lang           │ Badilisha lugha                         │
-├────────────────┼────────────────────────────────────────┤
-│ quit           │ Funga Medi                             │
-└────────────────┴────────────────────────────────────────┘
-""",
-    "fr": """
-┌─────────────────────────────────────────────────────────┐
-│               COMMENT UTILISER MEDI                     │
-├────────────────┬────────────────────────────────────────┤
-│ Tapez quelque  │ Decrivez symptomes → Medi pose des      │
-│ chose          │ questions → donne une action claire    │
-├────────────────┼────────────────────────────────────────┤
-│ voice          │ Parlez au lieu de taper                │
-├────────────────┼────────────────────────────────────────┤
-│ image          │ Analysez une photo de plaie/eruption   │
-├────────────────┼────────────────────────────────────────┤
-│ stats          │ Resume des patients d aujourd hui      │
-├────────────────┼────────────────────────────────────────┤
-│ reset          │ Nouveau patient nouvelle conversation  │
-├────────────────┼────────────────────────────────────────┤
-│ lang           │ Changer de langue                      │
-├────────────────┼────────────────────────────────────────┤
-│ quit           │ Quitter Medi                           │
-└────────────────┴────────────────────────────────────────┘
-""",
-    "es": """
-┌─────────────────────────────────────────────────────────┐
-│               COMO USAR MEDI                            │
-├────────────────┬────────────────────────────────────────┤
-│ Escribe algo   │ Describe sintomas → Medi pregunta       │
-│                │ → luego da una accion clara            │
-├────────────────┼────────────────────────────────────────┤
-│ voice          │ Habla en vez de escribir               │
-├────────────────┼────────────────────────────────────────┤
-│ image          │ Analiza foto de herida/erupcion        │
-├────────────────┼────────────────────────────────────────┤
-│ stats          │ Resumen de pacientes de hoy            │
-├────────────────┼────────────────────────────────────────┤
-│ reset          │ Nuevo paciente nueva conversacion      │
-├────────────────┼────────────────────────────────────────┤
-│ lang           │ Cambiar idioma                         │
-├────────────────┼────────────────────────────────────────┤
-│ quit           │ Salir de Medi                          │
-└────────────────┴────────────────────────────────────────┘
-""",
-    "pt": """
-┌─────────────────────────────────────────────────────────┐
-│               COMO USAR O MEDI                          │
-├────────────────┬────────────────────────────────────────┤
-│ Digite algo    │ Descreva sintomas → Medi pergunta       │
-│                │ → depois da uma acao clara             │
-├────────────────┼────────────────────────────────────────┤
-│ voice          │ Fale em vez de digitar                 │
-├────────────────┼────────────────────────────────────────┤
-│ image          │ Analise foto de ferida/erupcao         │
-├────────────────┼────────────────────────────────────────┤
-│ stats          │ Resumo dos pacientes de hoje           │
-├────────────────┼────────────────────────────────────────┤
-│ reset          │ Novo paciente nova conversa            │
-├────────────────┼────────────────────────────────────────┤
-│ lang           │ Mudar idioma                           │
-├────────────────┼────────────────────────────────────────┤
-│ quit           │ Sair do Medi                           │
-└────────────────┴────────────────────────────────────────┘
-""",
-}
-
-GOODBYES = {
-    "en": "Goodbye!",
-    "ur-roman": "Khuda Hafiz!",
-    "ur": "اللہ حافظ!",
-    "hi": "अलविदा!",
-    "ha": "Sai anjima!",
-    "sw": "Kwaheri!",
-    "fr": "Au revoir!",
-    "bn": "বিদায়!",
-    "tl": "Paalam!",
-    "am": "ደህና ሁኑ!",
-    "ps": "خداى پامان!",
-    "so": "Nabad gelyo!",
-    "pt": "Adeus!",
-    "es": "Adios!",
-    "id": "Selamat tinggal!",
-}
+Typing anything else sends it to Medi as patient context.
+"""
 
 
-def get_tooltip(lang_code: str) -> str:
-    return TOOLTIPS.get(lang_code, TOOLTIPS["en"])
+@dataclass(frozen=True)
+class LanguageOption:
+    menu_key: str
+    label: str
+    code: str
+    greeting: str
+    hint: str
 
 
-def get_prompt_symbol(lang_code: str) -> str:
-    prompts = {
-        "ur": "صحت کارکن",
-        "ur-roman": "CHW",
-        "hi": "स्वास्थ्य कार्यकर्ता",
-        "ha": "Ma'aikaci",
-        "sw": "Mfanyakazi",
-        "fr": "Agent",
-        "am": "Sehategna",
-        "bn": "Swasthyakarmee",
-        "yo": "Oluranlowo",
-        "ig": "Onye oru",
-        "zu": "Msebenzi",
-        "es": "Agente",
-        "pt": "Agente",
-        "id": "Petugas",
-        "tl": "Manggagawa",
-        "so": "Shaqaale",
-        "ps": "CHW",
-        "ti": "Serahategna",
-        "my": "CHW",
-        "km": "CHW",
-        "ne": "Swasthyakarmee",
-    }
-    return prompts.get(lang_code, "CHW")
+LANGUAGES: tuple[LanguageOption, ...] = (
+    LanguageOption("1", "English", "en", "Hello. I am Medi. Tell me about your patient.", "Global default"),
+    LanguageOption("2", "Roman Urdu", "ur-roman", "Assalam. Main Medi hoon. Mareez ke bare mein batayein.", "Pakistan and India"),
+    LanguageOption("3", "Urdu", "ur", "Assalam. Main Medi hoon. Mareez ke bare mein batayein.", "Pakistan"),
+    LanguageOption("4", "Hindi", "hi", "Namaste. Main Medi hoon. Mareez ke bare mein batayein.", "India"),
+    LanguageOption("5", "Hausa", "ha", "Sannu. Ni ne Medi. Ka fada min game da majiyyaci.", "Nigeria and Niger"),
+    LanguageOption("6", "Swahili", "sw", "Habari. Mimi ni Medi. Niambie kuhusu mgonjwa.", "East Africa"),
+    LanguageOption("7", "French", "fr", "Bonjour. Je suis Medi. Parlez-moi du patient.", "West and Central Africa"),
+    LanguageOption("8", "Bangla", "bn", "Hello. Ami Medi. Rogir kotha bolun.", "Bangladesh"),
+    LanguageOption("9", "Soomaali", "so", "Salaam. Anigu waxaan ahay Medi. Ka waran bukaanka.", "Somalia"),
+    LanguageOption("10", "Spanish", "es", "Hola. Soy Medi. Cuentame del paciente.", "Latin America"),
+    LanguageOption("11", "Portuguese", "pt", "Ola. Sou Medi. Fale sobre o paciente.", "Lusophone regions"),
+    LanguageOption("12", "Indonesian", "id", "Halo. Saya Medi. Ceritakan tentang pasien.", "Indonesia"),
+)
+
+LANGUAGE_BY_KEY = {option.menu_key: option for option in LANGUAGES}
 
 
-def get_goodbye(lang_code: str) -> str:
-    return GOODBYES.get(lang_code, "Goodbye!")
+def print_language_menu() -> None:
+    print("Choose a language:")
+    for option in LANGUAGES:
+        print(f"  {option.menu_key}. {option.label:<11} - {option.hint}")
 
 
-def show_language_menu():
-    print("\n" + "=" * 62)
-    print("  SELECT YOUR LANGUAGE / apni zaban select karein")
-    print("=" * 62)
-    for num, (name, code, _) in LANGUAGES.items():
-        desc = LANG_DESCRIPTIONS.get(code, "")
-        print(f"  [{num:>2}]  {name:<14} — {desc}")
-    print("=" * 62)
-
-
-def clean_response(text: str) -> str:
-    text = re.sub(r"<think>.*?</think>", "", text, flags=re.DOTALL)
-    text = re.sub(r"Thinking Process:.*?\.\.\.done thinking\.", "", text, flags=re.DOTALL)
-    text = re.sub(r"\*\*|\*|##|#", "", text)
-    return text.strip()
-
-
-def is_final_verdict(response: str) -> bool:
-    verdict_keywords = [
-        "home care", "refer", "emergency", "hospital",
-        "ghar pe", "clinic", "foran", "immediately",
-        "go to", "take to", "visit the",
-    ]
-    response_lower = response.lower()
-    return any(keyword in response_lower for keyword in verdict_keywords)
-
-
-def run_text_mode():
-    print(BANNER)
-    init_db()
-
-    show_language_menu()
+def choose_language() -> LanguageOption:
     while True:
-        choice = input("\n  Enter number (1-22): ").strip()
-        if choice in LANGUAGES:
-            lang_name, lang_code, greeting = LANGUAGES[choice]
-            break
-        print("  Invalid. Enter 1-22.")
+        print_language_menu()
+        selected = input("> ").strip()
+        option = LANGUAGE_BY_KEY.get(selected)
+        if option:
+            return option
+        print("Invalid option. Please choose one of the listed numbers.")
 
-    print(f"\n  Language set: {lang_name}\n")
-    set_tts_language(lang_code)
-    print(greeting)
-    print(get_tooltip(lang_code))
 
-    prompt = get_prompt_symbol(lang_code)
-    history = []
+def parse_action_label(response: str) -> str:
+    upper = response.upper()
+    if upper.startswith("EMERGENCY:"):
+        return "EMERGENCY"
+    if upper.startswith("REFER TO CLINIC:"):
+        return "REFER"
+    if upper.startswith("HOME CARE:"):
+        return "HOME CARE"
+    return "FOLLOW_UP"
+
+
+def print_stats() -> None:
+    stats = get_stats()
+    print(
+        "Stats:"
+        f" total={stats['total_visits']}"
+        f" emergency={stats['emergencies']}"
+        f" refer={stats['referrals']}"
+        f" home_care={stats['home_care']}"
+    )
+
+
+def print_recent_visits() -> None:
+    rows = get_recent_visits(5)
+    if not rows:
+        print("No visits logged yet.")
+        return
+
+    print("Recent visits:")
+    for row in rows:
+        print(
+            f"- {row['timestamp']} | {row['language']} | {row['severity']} | "
+            f"{row['action']} | {row['symptoms']}"
+        )
+
+
+def handle_agent_turn(
+    message: str,
+    history: list[dict],
+    language: LanguageOption,
+    *,
+    image_used: bool = False,
+    speak_back: bool = False,
+) -> list[dict]:
+    result = run_agent(message, history)
+    response = result["response"]
+    tool_used = result.get("tool_used")
+    tool_result = result.get("tool_result")
+    action = parse_action_label(response)
+
+    print(f"Medi: {response}")
+    if tool_used:
+        print(f"Tool: {tool_used}")
+    if tool_result:
+        print(f"Tool result: {tool_result}")
+
+    log_visit(
+        symptoms=message,
+        severity=action,
+        action=action,
+        language=language.label,
+        tool_used=tool_used,
+        response=response,
+        image_used=image_used,
+    )
+
+    if speak_back:
+        from app.core.voice_handler import speak
+
+        speak(response)
+
+    return result["history"]
+
+
+def normalize_image_path(raw: str) -> str:
+    path = raw.strip()
+    if (path.startswith('"') and path.endswith('"')) or (path.startswith("'") and path.endswith("'")):
+        return path[1:-1]
+    return path
+
+
+def image_command_path(command: str) -> str | None:
+    if not command.lower().startswith("image "):
+        return None
+    return normalize_image_path(command[6:])
+
+
+def greet(language: LanguageOption) -> None:
+    print()
+    print(BANNER)
+    print(f"Language: {language.label}")
+    print(language.greeting)
+    print(HELP_TEXT.strip())
+    print()
+
+
+def main_loop() -> None:
+    init_db()
+    language = choose_language()
+    from app.core.voice_handler import set_tts_language
+
+    set_tts_language(language.code)
+    history: list[dict] = []
+
+    greet(language)
 
     while True:
         try:
-            user_input = input(f"\n{prompt} > ").strip()
+            user_input = input("You: ").strip()
         except (EOFError, KeyboardInterrupt):
-            print(f"\n{get_goodbye(lang_code)}")
+            print("\nGoodbye.")
             break
 
         if not user_input:
             continue
 
-        cmd = user_input.lower()
+        lowered = user_input.lower()
 
-        cmd_map = {
-            "2": "voice",
-            "3": "image",
-            "4": "stats",
-            "5": "reset",
-            "6": "lang",
-            "7": "quit",
-        }
-        if cmd in cmd_map:
-            cmd = cmd_map[cmd]
-            user_input = cmd
-
-        if cmd == "quit":
-            print(get_goodbye(lang_code))
+        if lowered == "quit":
+            print("Goodbye.")
             break
 
-        elif cmd == "reset":
-            reset()
+        if lowered == "help":
+            print(HELP_TEXT.strip())
+            continue
+
+        if lowered == "stats":
+            print_stats()
+            continue
+
+        if lowered == "recent":
+            print_recent_visits()
+            continue
+
+        if lowered == "reset":
             history = []
-            set_tts_language(lang_code)
-            print(f"\n{greeting}\n")
+            reset()
+            print("Started a new patient conversation.")
+            print(language.greeting)
+            continue
 
-        elif cmd == "lang":
-            show_language_menu()
-            choice = input("\n  Enter number (1-22): ").strip()
-            if choice in LANGUAGES:
-                lang_name, lang_code, greeting = LANGUAGES[choice]
-                prompt = get_prompt_symbol(lang_code)
-                reset()
-                history = []
-                print(f"\n  Language set: {lang_name}\n")
-                set_tts_language(lang_code)
-                print(greeting)
-                print(get_tooltip(lang_code))
+        if lowered == "lang":
+            language = choose_language()
+            set_tts_language(language.code)
+            history = []
+            reset()
+            print(f"Language switched to {language.label}.")
+            print(language.greeting)
+            continue
 
-        elif cmd == "stats":
-            stats = get_stats()
-            print(f"\n{'─'*35}")
-            print(f"  Total Visits : {stats['total_visits']}")
-            print(f"  Emergencies  : {stats['emergencies']}")
-            print(f"  Referrals    : {stats['referrals']}")
-            print(f"  Home Care    : {stats['home_care']}")
-            print(f"{'─'*35}")
+        if lowered == "voice":
+            from app.core.voice_handler import listen
 
-        elif cmd == "voice":
-            print("\n  Listening...")
-            user_input = listen()
-            if not user_input or not user_input.strip():
-                print("  Could not hear. Try again.")
+            transcript = listen()
+            if not transcript:
+                print("No voice input captured.")
                 continue
-            print(f"  Heard: {user_input}\n")
-            result = run_agent(user_input, history)
-            history = result["history"]
-            response = result["response"]
-            severity = assess_severity(user_input)
-            is_verdict = any(kw in response.lower() for kw in [
-                "home care", "refer", "emergency", "hospital",
-                "ghar pe", "clinic", "foran"
-            ])
-            if is_verdict:
-                print(f"\n  [{severity['level']}] {severity['action']}")
-                log_visit(
-                    symptoms=user_input,
-                    severity=severity["level"],
-                    action=severity["action"],
-                    language=lang_code,
-                    tool_used=result.get("tool_used"),
-                    response=response
-                )
-            else:
-                log_visit(
-                    symptoms=user_input,
-                    severity="PENDING",
-                    action="IN PROGRESS",
-                    language=lang_code,
-                    tool_used=result.get("tool_used"),
-                    response=response
-                )
+            print(f"Heard: {transcript}")
+            history = handle_agent_turn(
+                transcript,
+                history,
+                language,
+                speak_back=True,
+            )
+            continue
 
-            speak(response)
+        image_path = image_command_path(user_input)
+        if image_path is not None:
+            from app.core.image_analyzer import analyze_image
 
-        elif cmd.startswith("image"):
-            parts = user_input.split(maxsplit=1)
-            path = parts[1] if len(parts) > 1 else input("  Image path: ").strip()
-            print("\n  Analyzing image...")
-            result = analyze_image(path)
-            result = clean_response(result)
-            print(f"\nMedi: {result}")
-            speak(result)
+            result = analyze_image(image_path)
+            print(f"Medi: {result}")
+            action = parse_action_label(result)
+            log_visit(
+                symptoms=f"image:{image_path}",
+                severity=action,
+                action=action,
+                language=language.label,
+                tool_used="image_triage",
+                response=result,
+                image_used=True,
+            )
+            continue
 
-        else:
-            result = run_agent(user_input, history)
-            history = result["history"]
-            response = result["response"]
-
-            verdict_keywords = [
-                "home care", "refer", "emergency", "hospital",
-                "ghar pe", "clinic", "foran", "immediately",
-                "go to", "take to", "visit"
-            ]
-            is_verdict = any(kw in response.lower() for kw in verdict_keywords)
-
-            if is_verdict:
-                severity = assess_severity(user_input)
-                print(f"\n  [{severity['level']}] {severity['action']}")
-                log_visit(
-                    symptoms=user_input,
-                    severity=severity["level"],
-                    action=severity["action"],
-                    language=lang_code,
-                    tool_used=result.get("tool_used"),
-                    response=response
-                )
-            else:
-                log_visit(
-                    symptoms=user_input,
-                    severity="PENDING",
-                    action="IN PROGRESS",
-                    language=lang_code,
-                    tool_used=result.get("tool_used"),
-                    response=response
-                )
-
-            speak(response)
+        history = handle_agent_turn(user_input, history, language)
 
 
 if __name__ == "__main__":
-    _ = chat
-    run_text_mode()
-
+    main_loop()

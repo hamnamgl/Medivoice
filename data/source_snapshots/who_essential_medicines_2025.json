@@ -1,0 +1,30 @@
+{
+  "source_id": "who_eml_2025",
+  "title": "The selection and use of essential medicines, 2025: WHO Model List of Essential Medicines, 24th list",
+  "publisher": "World Health Organization",
+  "publication_date": "2025-09-05",
+  "document_type": "Technical document",
+  "reference_number": "B09474",
+  "source_url": "https://www.who.int/publications/i/item/B09474",
+  "index_url": "https://www.who.int/groups/expert-committee-on-selection-and-use-of-essential-medicines/essential-medicines-lists",
+  "license": "WHO site lists Creative Commons licensing on publication page",
+  "snapshot_kind": "metadata_only",
+  "notes": [
+    "Current WHO EML page says the 24th EML and 10th EMLc were updated in September 2025.",
+    "MediVoice currently uses a curated offline subset of medicine dosing rather than the full WHO list.",
+    "This snapshot records the official source for provenance and future normalization work."
+  ],
+  "current_list_facts": {
+    "eml_revision": "24th list",
+    "emlc_revision": "10th list",
+    "updated_month": "2025-09"
+  },
+  "medivoice_subset_candidates": [
+    "paracetamol",
+    "amoxicillin",
+    "oral rehydration salts",
+    "zinc",
+    "ibuprofen",
+    "cotrimoxazole"
+  ]
+}
