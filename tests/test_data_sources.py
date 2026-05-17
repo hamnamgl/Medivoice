@@ -20,3 +20,4 @@ def test_build_manifest_marks_sources_as_imported_snapshots():
     assert manifest["generated_files"]
     assert all(source["status"] == "imported_snapshot" for source in manifest["sources"])
     assert any(source["id"] == "who_eml_2025" for source in manifest["sources"])
+    assert any(source["id"] == "pakistan_federal_hospitals_sample" for source in manifest["sources"])

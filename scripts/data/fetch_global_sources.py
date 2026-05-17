@@ -172,6 +172,86 @@ SOURCE_DEFINITIONS = [
             ],
         },
     },
+    {
+        "id": "pakistan_federal_hospitals_sample",
+        "output": SNAPSHOT_DIR / "pakistan_federal_hospitals_sample.json",
+        "payload": {
+            "source_id": "pakistan_federal_hospitals_sample",
+            "snapshot_kind": "official_public_facility_sample",
+            "owner": "Ministry of National Health Services, Regulations and Coordination, Pakistan",
+            "notes": [
+                "This file records a small official-source sample of Pakistan health facilities referenced on NHSRC pages and NHSRC Year Book material.",
+                "It is intended as a provenance-backed normalization seed, not a nationwide registry export.",
+            ],
+            "sources": [
+                {
+                    "title": "NHSRC overview page",
+                    "url": "https://nhsrc.gov.pk/overview",
+                    "facts": [
+                        "The department list includes Federal Government Polyclinic Hospital.",
+                        "The page also references Pakistan Institute of Medical Sciences and National Institute of Health.",
+                    ],
+                },
+                {
+                    "title": "COVID-19 Facilitation page",
+                    "url": "https://nhsrc.gov.pk/Detail/NjQ4NWQzOTktOWViYS00Yzk4LTlhNWYtOWMzM2VmZDEwYWYw",
+                    "facts": [
+                        "The page lists COVID-19 designated tertiary hospitals and province-wise isolation hospitals.",
+                        "The page links back to Pakistan Institute of Medical Sciences as an official quick link.",
+                    ],
+                },
+                {
+                    "title": "NHSRC Year Book 2021-2022 snippet",
+                    "url": "https://www.nhsrc.gov.pk/SiteImage/Misc/files/YEAR%20BOOK%202021-2022-compressed%20%281%29.pdf",
+                    "facts": [
+                        "Hospitals listed in the snippet include PIMS Islamabad, Federal Government Polyclinic Islamabad, Federal General Hospital Islamabad, NIRM Islamabad, Federal Government T.B. Hospital Rawalpindi, and Shaikh Zayed Hospital Lahore.",
+                    ],
+                },
+            ],
+            "facilities": [
+                {
+                    "name": "Pakistan Institute of Medical Sciences",
+                    "short_name": "PIMS",
+                    "city": "Islamabad",
+                    "jurisdiction": "Federal",
+                    "source_basis": "NHSRC overview and Year Book 2021-2022",
+                },
+                {
+                    "name": "Federal Government Polyclinic Hospital",
+                    "short_name": "FGPC",
+                    "city": "Islamabad",
+                    "jurisdiction": "Federal",
+                    "source_basis": "NHSRC overview and Year Book 2021-2022",
+                },
+                {
+                    "name": "Federal General Hospital",
+                    "short_name": "FGH",
+                    "city": "Islamabad",
+                    "jurisdiction": "Federal",
+                    "source_basis": "NHSRC Year Book 2021-2022",
+                },
+                {
+                    "name": "National Institute of Rehabilitation Medicine",
+                    "short_name": "NIRM",
+                    "city": "Islamabad",
+                    "jurisdiction": "Federal",
+                    "source_basis": "NHSRC Year Book 2021-2022",
+                },
+                {
+                    "name": "Federal Government T.B. Hospital",
+                    "city": "Rawalpindi",
+                    "jurisdiction": "Federal reference in Year Book",
+                    "source_basis": "NHSRC Year Book 2021-2022",
+                },
+                {
+                    "name": "Shaikh Zayed Hospital",
+                    "city": "Lahore",
+                    "jurisdiction": "Punjab reference in Year Book",
+                    "source_basis": "NHSRC Year Book 2021-2022",
+                },
+            ],
+        },
+    },
 ]
 
 

@@ -4,7 +4,8 @@
     "data/source_snapshots/who_essential_medicines_2025.json",
     "data/source_snapshots/who_imci_2014.json",
     "data/source_snapshots/official_referral_registries.json",
-    "data/source_snapshots/kenya_nairobi_public_facilities_sample.json"
+    "data/source_snapshots/kenya_nairobi_public_facilities_sample.json",
+    "data/source_snapshots/pakistan_federal_hospitals_sample.json"
   ],
   "sources": [
     {
@@ -31,6 +32,13 @@
     {
       "id": "kenya_nairobi_public_facilities_sample",
       "output": "data/source_snapshots/kenya_nairobi_public_facilities_sample.json",
+      "status": "imported_snapshot",
+      "source_url": null,
+      "snapshot_kind": "official_public_facility_sample"
+    },
+    {
+      "id": "pakistan_federal_hospitals_sample",
+      "output": "data/source_snapshots/pakistan_federal_hospitals_sample.json",
       "status": "imported_snapshot",
       "source_url": null,
       "snapshot_kind": "official_public_facility_sample"

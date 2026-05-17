@@ -1,30 +1,36 @@
 {
   "country": "Pakistan",
-  "last_updated": "2026-01",
-  "status": "curated_demo_pack",
-  "official_source_catalog": "data/source_snapshots/official_referral_registries.json",
+  "last_updated": "2026-05",
+  "status": "official_sample_plus_curated_pack",
+  "source_snapshot": "data/source_snapshots/pakistan_federal_hospitals_sample.json",
   "notes": [
-    "This is a curated Pakistan starter pack for offline demo and local testing.",
-    "It is not yet a full ministry registry export."
+    "Federal Islamabad-linked facilities are grounded in NHSRC overview, COVID facilitation pages, and NHSRC Year Book references.",
+    "Some provincial entries remain curated starter references until a larger official source export is normalized."
   ],
   "facilities": {
+    "islamabad": {
+      "pims": "Pakistan Institute of Medical Sciences (PIMS), Islamabad - federal tertiary referral hospital",
+      "polyclinic": "Federal Government Polyclinic Hospital (FGPC), Islamabad - federal referral hospital",
+      "fgh": "Federal General Hospital (FGH), Islamabad - listed in NHSRC Year Book 2021-2022",
+      "nirm": "National Institute of Rehabilitation Medicine (NIRM), Islamabad - listed in NHSRC Year Book 2021-2022"
+    },
     "punjab": {
-      "rawalpindi": "District Headquarters Hospital Rawalpindi - 051-9270330",
-      "lahore": "Services Hospital Lahore - 042-99203530",
-      "faisalabad": "Allied Hospital Faisalabad - 041-9220233",
-      "multan": "Nishtar Hospital Multan - 061-9200012"
+      "rawalpindi": "Federal Government T.B. Hospital Rawalpindi - listed in NHSRC Year Book 2021-2022",
+      "lahore": "Shaikh Zayed Hospital Lahore - listed in NHSRC Year Book 2021-2022",
+      "faisalabad": "Allied Hospital Faisalabad - curated provincial starter entry",
+      "multan": "Nishtar Hospital Multan - curated provincial starter entry"
     },
     "sindh": {
-      "karachi": "Civil Hospital Karachi - 021-99215740",
-      "hyderabad": "Liaquat University Hospital - 022-9213310"
+      "karachi": "Civil Hospital Karachi - curated provincial starter entry",
+      "hyderabad": "Liaquat University Hospital Hyderabad - curated provincial starter entry"
     },
     "kpk": {
-      "peshawar": "Lady Reading Hospital - 091-9211330",
-      "abbottabad": "Ayub Teaching Hospital - 0992-9310551"
+      "peshawar": "Lady Reading Hospital Peshawar - curated provincial starter entry",
+      "abbottabad": "Ayub Teaching Hospital Abbottabad - curated provincial starter entry"
     },
     "balochistan": {
-      "quetta": "Civil Hospital Quetta - 081-9202027"
+      "quetta": "Civil Hospital Quetta - curated provincial starter entry"
     }
   },
-  "emergency": "1122 (Punjab) | 115 (Sindh) | 1122 (KPK)"
+  "emergency": "1122 | 115 | Edhi 115"
 }

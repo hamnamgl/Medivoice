@@ -65,6 +65,13 @@ def test_run_agent_routes_referral_queries_without_model(monkeypatch):
     assert "Punjab" in result["response"] or "Rawalpindi" in result["response"]
 
 
+def test_run_agent_routes_islamabad_referral_queries(monkeypatch):
+    monkeypatch.setattr(function_module, "ollama", DummyOllama())
+    result = run_agent("Nearest hospital in Islamabad?")
+    assert result["tool_used"] == "lookup_referral"
+    assert "Pakistan" in result["response"] or "Islamabad" in result["response"] or "PIMS" in result["response"]
+
+
 def test_run_agent_routes_kenya_referral_queries(monkeypatch):
     monkeypatch.setattr(function_module, "ollama", DummyOllama())
     result = run_agent("Nearest clinic in Nairobi?")

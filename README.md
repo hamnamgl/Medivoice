@@ -34,6 +34,7 @@ Current project goals:
 | Custom local organization data pack | Working |
 | Official source snapshots in repo | Working |
 | Kenya official public registry sample | Working |
+| Pakistan official public facility sample | Working |
 | Fully verified worldwide medical dataset | Not yet complete |
 
 ## Data Model
