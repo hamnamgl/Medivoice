@@ -35,6 +35,8 @@ Current project goals:
 | Official source snapshots in repo | Working |
 | Kenya official public registry sample | Working |
 | Pakistan official public facility sample | Working |
+| Fine-tuning dataset scaffold | Working |
+| Explainability metadata in routing | Working |
 | Fully verified worldwide medical dataset | Not yet complete |
 
 ## Data Model

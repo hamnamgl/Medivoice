@@ -56,6 +56,7 @@ def test_run_agent_routes_drug_queries_without_model(monkeypatch):
     result = run_agent("15kg child - paracetamol dosage?")
     assert result["tool_used"] == "get_drug_dosage"
     assert "225 mg" in result["response"]
+    assert result["explanation"]["type"] == "drug_reference"
 
 
 def test_run_agent_routes_referral_queries_without_model(monkeypatch):
@@ -105,6 +106,7 @@ def test_run_agent_fourth_turn_returns_verdict(monkeypatch):
         history = result["history"]
     assert result["tool_used"] == "assess_triage"
     assert result["response"].startswith(("HOME CARE:", "REFER TO CLINIC:", "EMERGENCY:"))
+    assert result["explanation"]["type"] == "triage_rule"
 
 
 def test_custom_referral_overlay_merges_regions(monkeypatch, tmp_path):

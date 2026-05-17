@@ -267,6 +267,32 @@ def _build_direct_tool_reply(tool_name: str, tool_result: str | dict) -> str:
     return str(tool_result)
 
 
+def _build_explainability(tool_name: str | None, tool_result: str | dict, user_message: str) -> dict | None:
+    if tool_name == "get_drug_dosage":
+        drug = _extract_drug(user_message or "")
+        medicine = DRUG_DATA.get("medicines", {}).get(drug or "", {})
+        return {
+            "type": "drug_reference",
+            "source": DRUG_DATA.get("source"),
+            "source_url": DRUG_DATA.get("source_url"),
+            "matched_item": drug,
+            "notes": medicine.get("notes"),
+        }
+    if tool_name == "lookup_referral":
+        return {
+            "type": "referral_lookup",
+            "source": "local_referral_pack",
+            "matched_query": user_message,
+        }
+    if tool_name == "assess_triage" and isinstance(tool_result, dict):
+        return {
+            "type": "triage_rule",
+            "matched_rules": tool_result.get("matched_rules", []),
+            "rule_source": tool_result.get("rule_source"),
+        }
+    return None
+
+
 def _detect_language(text: str) -> str:
     if re.search(r"[\u0600-\u06FF]", text):
         return "ur"
@@ -410,11 +436,13 @@ def run_agent(user_message: str, history: list = None) -> dict:
         full_response = _build_direct_tool_reply(tool_used, tool_result)
 
     if full_response.strip():
+        explanation = _build_explainability(tool_used, tool_result, user_message)
         history.append({"role": "assistant", "content": full_response})
         return {
             "response": full_response,
             "tool_used": tool_used,
             "tool_result": tool_result,
+            "explanation": explanation,
             "history": history,
         }
 
@@ -429,6 +457,7 @@ def run_agent(user_message: str, history: list = None) -> dict:
             "response": full_response,
             "tool_used": "assess_triage",
             "tool_result": severity_now,
+            "explanation": _build_explainability("assess_triage", severity_now, all_user_text),
             "history": history,
         }
 
@@ -442,6 +471,7 @@ def run_agent(user_message: str, history: list = None) -> dict:
             "response": full_response,
             "tool_used": None,
             "tool_result": None,
+            "explanation": None,
             "history": history,
         }
 
@@ -452,6 +482,7 @@ def run_agent(user_message: str, history: list = None) -> dict:
             "response": full_response,
             "tool_used": None,
             "tool_result": None,
+            "explanation": None,
             "history": history,
         }
 
@@ -462,6 +493,7 @@ def run_agent(user_message: str, history: list = None) -> dict:
             "response": full_response,
             "tool_used": None,
             "tool_result": None,
+            "explanation": None,
             "history": history,
         }
 
@@ -472,6 +504,7 @@ def run_agent(user_message: str, history: list = None) -> dict:
             "response": full_response,
             "tool_used": "assess_triage",
             "tool_result": severity_now,
+            "explanation": _build_explainability("assess_triage", severity_now, all_user_text),
             "history": history,
         }
 
@@ -573,6 +606,7 @@ def run_agent(user_message: str, history: list = None) -> dict:
         "response": full_response,
         "tool_used": tool_used,
         "tool_result": tool_result,
+        "explanation": _build_explainability(tool_used, tool_result, all_user_text),
         "history": history,
     }
 

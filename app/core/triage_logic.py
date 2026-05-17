@@ -86,13 +86,18 @@ def assess_severity(text: str) -> dict:
                 "level": "EMERGENCY",
                 "action": "FORAN HOSPITAL",
                 "message": "Yeh emergency hai. Foran hospital le jayen. Deri mat karein.",
+                "matched_rules": [keyword],
+                "rule_source": "keyword_emergency",
             }
 
     if _contains_any(text_lower, emergency_signs):
+        matches = [item for item in emergency_signs if item.lower() in text_lower]
         return {
             "level": "EMERGENCY",
             "action": "FORAN HOSPITAL",
             "message": "Danger signs mojood hain. Foran hospital ya emergency care ki zarurat hai.",
+            "matched_rules": matches,
+            "rule_source": "generic_protocol_emergency",
         }
 
     for keyword in REFER_KEYWORDS:
@@ -101,19 +106,28 @@ def assess_severity(text: str) -> dict:
                 "level": "REFER",
                 "action": "CLINIC REFER KAREIN",
                 "message": "Is case mein clinic jana zaroori hai. Aaj hi le jayen.",
+                "matched_rules": [keyword],
+                "rule_source": "keyword_refer",
             }
 
     if _contains_any(text_lower, refer_signs) or _has_long_duration(text_lower):
+        matches = [item for item in refer_signs if item.lower() in text_lower]
+        if _has_long_duration(text_lower):
+            matches.append("long_duration")
         return {
             "level": "REFER",
             "action": "CLINIC REFER KAREIN",
             "message": "Yeh case protocol ke mutabiq clinic review mangta hai. Aaj hi dikhayen.",
+            "matched_rules": matches,
+            "rule_source": "generic_protocol_refer",
         }
 
     return {
         "level": "HOME CARE",
         "action": "GHAR PE DEKHBHAL",
         "message": "Abhi ghar pe dekhbhal karein. Agar haalt kharab ho toh clinic jayen.",
+        "matched_rules": [],
+        "rule_source": "default_home_care",
     }
 
 

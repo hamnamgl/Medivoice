@@ -1,0 +1,20 @@
+{
+  "total_examples": 19,
+  "task_counts": {
+    "protocol_followup": 7,
+    "triage_dialogue": 4,
+    "image_triage": 2,
+    "drug_dosage": 6
+  },
+  "language_counts": {
+    "English": 13,
+    "Roman Urdu": 2,
+    "Hausa": 2,
+    "Swahili": 2
+  },
+  "strict_verdict_coverage": 0.632,
+  "notes": [
+    "This evaluation checks dataset shape and verdict formatting coverage.",
+    "Model-vs-model benchmarking should be added after an actual Unsloth fine-tuned checkpoint is produced."
+  ]
+}

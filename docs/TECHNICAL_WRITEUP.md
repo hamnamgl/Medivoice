@@ -69,6 +69,18 @@ True offline use happens when:
 - custom local data pack support exists
 - image analysis path now has model fallback
 - notebook and PWA demo path are functional
+- source snapshots for WHO, Kenya, and Pakistan are now tracked in-repo
+- dataset preparation and evaluation scaffolds now exist for future Unsloth runs
+
+## Explainability and Audit Trail
+
+MediVoice now carries lightweight explainability metadata in its core routing layer:
+
+- dosage responses can point to the local medicine source
+- triage verdicts can expose matched rules and rule source
+- referral decisions can expose that they came from a local referral pack
+
+This is not yet a full clinician-grade audit console, but it moves the system closer to the trust and safety goals in the planning document.
 
 ## Current Gaps
 
@@ -79,7 +91,7 @@ True offline use happens when:
 
 ## Next Technical Priorities
 
-1. source-driven global data import pipeline
-2. richer explainability and audit trails
-3. stronger multilingual evaluation set
+1. larger Nigeria official referral extraction
+2. actual Unsloth training run and checkpoint export
+3. richer multilingual evaluation set with base-vs-finetuned comparison
 4. packaging for field deployment hardware
