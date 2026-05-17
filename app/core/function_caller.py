@@ -10,9 +10,7 @@ from app.core.triage_logic import assess_severity
 
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 CUSTOM_DIR = DATA_DIR / "custom"
-REFERRAL_FILES = {
-    "pakistan": DATA_DIR / "referrals" / "pk_facilities.json",
-}
+REFERRAL_DIR = DATA_DIR / "referrals"
 DRUGS_FILE = DATA_DIR / "drugs" / "essential_medicines.json"
 CUSTOM_REFERRALS_FILE = CUSTOM_DIR / "referrals.json"
 CUSTOM_DRUGS_FILE = CUSTOM_DIR / "drugs.json"
@@ -94,20 +92,44 @@ def _merge_facility_maps(base: dict, overlay: dict) -> dict:
     return merged
 
 
+def _normalize_country_key(name: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")
+
+
+def _merge_country_pack(base: dict, overlay: dict) -> dict:
+    merged = dict(base)
+    merged["country"] = overlay.get("country", base.get("country", "Custom"))
+    merged["status"] = overlay.get("status", base.get("status", "custom"))
+    merged["emergency"] = overlay.get("emergency", base.get("emergency", "Ask local supervisor"))
+    merged["facilities"] = _merge_facility_maps(base.get("facilities", {}), overlay.get("facilities", {}))
+    for key, value in overlay.items():
+        if key not in {"country", "status", "emergency", "facilities"}:
+            merged[key] = value
+    return merged
+
+
+def _load_base_referral_packs() -> dict:
+    packs = {}
+    for path in sorted(REFERRAL_DIR.glob("*.json")):
+        pack = _load_json(path)
+        if not pack:
+            continue
+        country = pack.get("country", path.stem)
+        packs[_normalize_country_key(country)] = pack
+    return packs
+
+
 def _load_referral_data() -> dict:
-    base = _load_json(REFERRAL_FILES["pakistan"])
+    packs = _load_base_referral_packs()
     custom = _load_json(CUSTOM_REFERRALS_FILE)
     if not custom:
-        return base
+        return {"countries": packs}
 
-    merged = dict(base)
-    merged["country"] = custom.get("country", base.get("country", "Custom"))
-    merged["emergency"] = custom.get("emergency", base.get("emergency", "Ask local supervisor"))
-    merged["facilities"] = _merge_facility_maps(
-        base.get("facilities", {}),
-        custom.get("facilities", {}),
-    )
-    return merged
+    custom_country = custom.get("country", "Custom")
+    custom_key = _normalize_country_key(custom_country)
+    base_pack = packs.get(custom_key, {"country": custom_country, "facilities": {}})
+    packs[custom_key] = _merge_country_pack(base_pack, custom)
+    return {"countries": packs}
 
 
 def _load_drug_data() -> dict:
@@ -151,7 +173,12 @@ EMERGENCY: [reason]
 Never ask rating scales. Never ask food/sleep/stress unless relevant."""
 
 DOSAGE_HINTS = ["dosage", "dose", "kitni", "mg", "medicine", "drug", "paracetamol", "amoxicillin", "ors", "zinc", "ibuprofen", "cotrimoxazole"]
-REFERRAL_HINTS = ["hospital", "clinic", "referral", "nearest", "kahan", "where", "facility", "punjab", "sindh", "kpk", "balochistan", "rawalpindi", "lahore", "karachi", "peshawar", "quetta"]
+REFERRAL_HINTS = [
+    "hospital", "clinic", "referral", "nearest", "kahan", "where", "facility",
+    "punjab", "sindh", "kpk", "balochistan", "rawalpindi", "lahore", "karachi", "peshawar", "quetta",
+    "kenya", "nairobi", "embakasi", "starehe",
+    "nigeria", "lagos", "abuja", "kano",
+]
 HAUSA_HINTS = ["yaro", "zazzabi", "majiyyaci", "suma", "jini", "numfashi"]
 ROMAN_URDU_HINTS = ["bach", "mareez", "bukhar", "behosh", "foran", "dast", "ulti", "khansi", "saans"]
 
@@ -180,17 +207,32 @@ def _format_drug_dose(drug_name: str, weight_kg: float) -> str:
 
 def _lookup_referral_text(region_text: str) -> str:
     region_text = region_text.lower()
-    facilities = REFERRAL_DATA.get("facilities", {})
+    countries = REFERRAL_DATA.get("countries", {})
 
-    for province, cities in facilities.items():
-        if province in region_text:
-            first_city, first_facility = next(iter(cities.items()))
-            return f"{province.title()}: {first_city.title()} - {first_facility}. Emergency: {REFERRAL_DATA.get('emergency', 'Ask local supervisor')}"
-        for city, facility in cities.items():
-            if city in region_text:
-                return f"{city.title()}, {province.title()}: {facility}. Emergency: {REFERRAL_DATA.get('emergency', 'Ask local supervisor')}"
+    for country_key, pack in countries.items():
+        country_name = pack.get("country", country_key.title())
+        facilities = pack.get("facilities", {})
+        emergency = pack.get("emergency", "Ask local supervisor")
 
-    return f"Nearest government health facility - ask local CHW supervisor. Emergency: {REFERRAL_DATA.get('emergency', 'Ask local supervisor')}"
+        if country_name.lower() in region_text:
+            for region, cities in facilities.items():
+                if isinstance(cities, dict) and cities:
+                    first_city, first_facility = next(iter(cities.items()))
+                    return f"{country_name}: {first_city.title()}, {region.title()} - {first_facility}. Emergency: {emergency}"
+
+        for region, cities in facilities.items():
+            if region in region_text and isinstance(cities, dict) and cities:
+                first_city, first_facility = next(iter(cities.items()))
+                return f"{country_name}: {first_city.title()}, {region.title()} - {first_facility}. Emergency: {emergency}"
+            if not isinstance(cities, dict):
+                continue
+            for city, facility in cities.items():
+                if city in region_text:
+                    return f"{country_name}: {city.title()}, {region.title()} - {facility}. Emergency: {emergency}"
+
+    fallback_country = countries.get("pakistan") or next(iter(countries.values()), {})
+    fallback_emergency = fallback_country.get("emergency", "Ask local CHW supervisor")
+    return f"Nearest government health facility - ask local CHW supervisor. Emergency: {fallback_emergency}"
 
 
 def _extract_weight(text: str) -> float | None:

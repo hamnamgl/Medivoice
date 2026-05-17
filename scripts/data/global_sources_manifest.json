@@ -3,7 +3,8 @@
   "generated_files": [
     "data/source_snapshots/who_essential_medicines_2025.json",
     "data/source_snapshots/who_imci_2014.json",
-    "data/source_snapshots/official_referral_registries.json"
+    "data/source_snapshots/official_referral_registries.json",
+    "data/source_snapshots/kenya_nairobi_public_facilities_sample.json"
   ],
   "sources": [
     {
@@ -26,6 +27,13 @@
       "status": "imported_snapshot",
       "source_url": null,
       "snapshot_kind": "catalog"
+    },
+    {
+      "id": "kenya_nairobi_public_facilities_sample",
+      "output": "data/source_snapshots/kenya_nairobi_public_facilities_sample.json",
+      "status": "imported_snapshot",
+      "source_url": null,
+      "snapshot_kind": "official_public_facility_sample"
     }
   ]
 }

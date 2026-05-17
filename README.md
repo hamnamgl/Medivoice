@@ -33,6 +33,7 @@ Current project goals:
 | Image triage prompt + fallback | Working |
 | Custom local organization data pack | Working |
 | Official source snapshots in repo | Working |
+| Kenya official public registry sample | Working |
 | Fully verified worldwide medical dataset | Not yet complete |
 
 ## Data Model

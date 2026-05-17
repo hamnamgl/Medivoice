@@ -1,3 +1,23 @@
-[
-  {"name": "Primary Health Centre A", "state": "Kano", "phone": "+234-000-0000"}
-]
+{
+  "country": "Nigeria",
+  "last_updated": "2026-05",
+  "status": "registry_catalogued_starter",
+  "source_snapshot": "data/source_snapshots/official_referral_registries.json",
+  "notes": [
+    "The official Nigeria Health Facility Registry source is catalogued in the source snapshots.",
+    "A normalized nationwide facility extract has not yet been bundled in MediVoice.",
+    "This starter pack should be replaced with official HFR-derived entries before field deployment."
+  ],
+  "facilities": {
+    "fct": {
+      "abuja": "Use the Nigeria Health Facility Registry public portal for a verified local facility match"
+    },
+    "kano": {
+      "kano": "Use the Nigeria Health Facility Registry public portal for a verified local facility match"
+    },
+    "lagos": {
+      "lagos": "Use the Nigeria Health Facility Registry public portal for a verified local facility match"
+    }
+  },
+  "emergency": "112"
+}

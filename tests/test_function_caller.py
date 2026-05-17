@@ -65,6 +65,13 @@ def test_run_agent_routes_referral_queries_without_model(monkeypatch):
     assert "Punjab" in result["response"] or "Rawalpindi" in result["response"]
 
 
+def test_run_agent_routes_kenya_referral_queries(monkeypatch):
+    monkeypatch.setattr(function_module, "ollama", DummyOllama())
+    result = run_agent("Nearest clinic in Nairobi?")
+    assert result["tool_used"] == "lookup_referral"
+    assert "Kenya" in result["response"] or "Nairobi" in result["response"]
+
+
 def test_run_agent_first_turn_asks_duration(monkeypatch):
     monkeypatch.setattr(function_module, "ollama", DummyOllama())
     result = run_agent("I am feeling sick", [])
@@ -101,8 +108,8 @@ def test_custom_referral_overlay_merges_regions(monkeypatch, tmp_path):
     )
     monkeypatch.setattr(function_module, "CUSTOM_REFERRALS_FILE", custom_referrals)
     merged = function_module._load_referral_data()
-    assert merged["facilities"]["punjab"]["gujranwala"] == "DHQ Gujranwala - 055"
-    assert "rawalpindi" in merged["facilities"]["punjab"]
+    custom_pack = merged["countries"]["custom"]
+    assert custom_pack["facilities"]["punjab"]["gujranwala"] == "DHQ Gujranwala - 055"
 
 
 def test_custom_drug_overlay_adds_medicine(monkeypatch, tmp_path):
