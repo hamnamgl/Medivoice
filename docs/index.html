@@ -83,6 +83,20 @@
         linear-gradient(180deg, #21413d, #274750);
       color: #f5fbf7;
       border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 340px;
+      height: 340px;
+      right: -110px;
+      top: -140px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0) 70%);
+      pointer-events: none;
     }
 
     .hero-top {
@@ -234,6 +248,7 @@
       padding: 14px;
       min-height: 96px;
       box-shadow: 0 10px 22px rgba(22, 32, 51, 0.04);
+      animation: riseIn 0.5s ease both;
     }
 
     .overview-card h3 {
@@ -309,6 +324,7 @@
       display: flex;
       flex-direction: column;
       gap: 8px;
+      animation: riseIn 0.55s ease both;
     }
 
     .guide-top {
@@ -495,6 +511,14 @@
       margin-bottom: 8px;
     }
 
+    .bubble-hint {
+      display: block;
+      margin-top: 8px;
+      font-size: 0.76rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
     .verdict-badge {
       display: inline-block;
       margin-bottom: 8px;
@@ -532,6 +556,17 @@
     @keyframes pulse {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.35; }
+    }
+
+    @keyframes riseIn {
+      0% {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .composer {
@@ -1019,13 +1054,21 @@ EMERGENCY: [reason]`;
       if (role === "medi") {
         const verdict = detectVerdictClass(text);
         let badgeHtml = "";
+        let hintHtml = "";
         if (verdict) {
           bubble.classList.add(verdict.css);
           badgeHtml = `<div class="verdict-badge badge-${verdict.css}">${verdict.badge}</div>`;
           stats.total += 1;
           stats[verdict.statKey] += 1;
+          if (verdict.css === "emergency") {
+            hintHtml = `<span class="bubble-hint">Escalate immediately and avoid delaying referral to higher care.</span>`;
+          } else if (verdict.css === "refer") {
+            hintHtml = `<span class="bubble-hint">Use this when the patient needs same-day clinic review or a facility handoff.</span>`;
+          } else if (verdict.css === "home") {
+            hintHtml = `<span class="bubble-hint">Home-care advice is for the current symptoms only. Reassess if the patient worsens.</span>`;
+          }
         }
-        bubble.innerHTML = `${badgeHtml}${escapeHtml(text).replaceAll("\n", "<br>")}`;
+        bubble.innerHTML = `${badgeHtml}${escapeHtml(text).replaceAll("\n", "<br>")}${hintHtml}`;
       } else {
         bubble.textContent = text;
       }
