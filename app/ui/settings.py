@@ -9,3 +9,4 @@ def render_settings() -> None:
     st.write("Supported languages:")
     for language in SUPPORTED_LANGUAGES:
         st.write(f"- {language}")
+    st.caption("For full phone workflow use the PWA. For terminal workflow use the CLI.")

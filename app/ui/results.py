@@ -16,3 +16,6 @@ def render_results() -> None:
     st.write("Recommended actions:")
     for action in result["actions"]:
         st.write(f"- {action}")
+    if result.get("explanation"):
+        with st.expander("Why this answer?", expanded=False):
+            st.json(result["explanation"])

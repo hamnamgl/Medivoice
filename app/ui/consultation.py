@@ -1,7 +1,6 @@
 import streamlit as st
 
-from app.core.language_detector import detect_language
-from app.core.triage_logic import run_basic_triage
+from app.core.function_caller import run_agent
 
 
 def render_consultation() -> None:
@@ -14,7 +13,13 @@ def render_consultation() -> None:
 
     if st.button("Analyze consultation"):
         st.session_state["chief_complaint"] = complaint
-        detected = detect_language(complaint)
-        st.session_state["detected_language"] = detected
-        st.session_state["triage_result"] = run_basic_triage(complaint)
-        st.success(f"Consultation analyzed in {detected}.")
+        result = run_agent(complaint, st.session_state.get("agent_history", []))
+        st.session_state["agent_history"] = result["history"]
+        st.session_state["detected_language"] = result.get("explanation", {}).get("language", "Auto")
+        st.session_state["triage_result"] = {
+            "priority": result["response"].split(":", 1)[0],
+            "summary": result["response"],
+            "actions": [result.get("tool_used") or "guided_triage"],
+            "explanation": result.get("explanation"),
+        }
+        st.success("Consultation analyzed.")

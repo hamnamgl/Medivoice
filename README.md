@@ -113,6 +113,14 @@ ollama pull gemma3:4b
 python -m app.main
 ```
 
+### Streamlit Companion UI
+
+```bash
+streamlit run app/streamlit_app.py
+```
+
+Use this for laptop demos and operator walkthroughs. The PWA remains the phone-first path.
+
 ### PWA Demo
 
 ```bash

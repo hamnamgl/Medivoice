@@ -8,7 +8,7 @@ MediVoice is organized into four major layers:
 
 - CLI flow in `app/main.py`
 - PWA interface in `app/pwa/` and `docs/`
-- Streamlit-oriented UI components in `app/ui/`
+- optional Streamlit companion UI in `app/streamlit_app.py` and `app/ui/`
 
 ### 2. Core Decision Layer
 
