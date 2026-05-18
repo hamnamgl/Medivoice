@@ -160,6 +160,7 @@
     }
 
     .language-rail,
+    .guide-rail,
     .support-rail,
     .config-rail,
     .composer {
@@ -216,16 +217,87 @@
     .support-grid button {
       border-radius: 16px;
       text-align: left;
-      padding: 12px;
-      min-height: 72px;
+      padding: 14px;
+      min-height: 94px;
+      white-space: normal;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: flex-start;
     }
 
     .support-grid button span {
       display: block;
       color: var(--muted);
       font-size: 0.74rem;
-      margin-top: 4px;
+      margin-top: 8px;
       line-height: 1.4;
+    }
+
+    .guide-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .guide-card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.95), rgba(248,250,249,0.92));
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+      box-shadow: 0 12px 24px rgba(22, 32, 51, 0.04);
+      min-height: 132px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .guide-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .guide-card h3 {
+      font-size: 0.92rem;
+      color: var(--ink);
+      line-height: 1.2;
+    }
+
+    .guide-card p {
+      font-size: 0.79rem;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .guide-meta {
+      margin-top: auto;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--brand);
+    }
+
+    .info-button {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      border: 1px solid rgba(33, 65, 61, 0.18);
+      background: rgba(33, 65, 61, 0.08);
+      color: var(--brand);
+      font-size: 0.82rem;
+      font-weight: 800;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: 0.2s ease;
+    }
+
+    .info-button:hover {
+      background: var(--brand);
+      color: #ffffff;
+      transform: translateY(-1px);
     }
 
     .config-row {
@@ -423,6 +495,21 @@
       display: flex;
     }
 
+    .info-modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10, 20, 23, 0.45);
+      padding: 18px;
+      z-index: 30;
+    }
+
+    .info-modal.show {
+      display: flex;
+    }
+
     .modal-box {
       width: min(360px, 100%);
       background: var(--surface-strong);
@@ -454,6 +541,31 @@
       margin-top: 16px;
     }
 
+    .info-modal .modal-box {
+      width: min(560px, 100%);
+      padding: 24px;
+    }
+
+    .modal-kicker {
+      display: inline-block;
+      margin-bottom: 10px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(33, 65, 61, 0.08);
+      color: var(--brand);
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .modal-copy {
+      color: var(--muted);
+      line-height: 1.65;
+      font-size: 0.92rem;
+      white-space: pre-line;
+    }
+
     @media (max-width: 760px) {
       body {
         padding: 0;
@@ -467,7 +579,8 @@
       .hero-top,
       .config-row,
       .composer,
-      .support-grid {
+      .support-grid,
+      .guide-grid {
         grid-template-columns: 1fr;
       }
 
@@ -535,6 +648,52 @@
       </div>
     </section>
 
+    <section class="guide-rail">
+      <div class="section-label">Platform guide</div>
+      <div class="guide-grid">
+        <article class="guide-card">
+          <div class="guide-top">
+            <h3>When Ollama is used</h3>
+            <button class="info-button" onclick="openInfo('ollama')" title="Ollama details">?</button>
+          </div>
+          <p>Ollama is the local runtime layer. It serves the model, receives the chat request, and returns the answer to MediVoice.</p>
+          <div class="guide-meta">Runtime and delivery</div>
+        </article>
+        <article class="guide-card">
+          <div class="guide-top">
+            <h3>When Gemma is used</h3>
+            <button class="info-button" onclick="openInfo('gemma')" title="Gemma details">?</button>
+          </div>
+          <p>Gemma is used for guided medical reasoning, follow-up questions, multilingual replies, and final consultation wording.</p>
+          <div class="guide-meta">Reasoning model</div>
+        </article>
+        <article class="guide-card">
+          <div class="guide-top">
+            <h3>How to use MediVoice</h3>
+            <button class="info-button" onclick="openInfo('usage')" title="Usage guide">?</button>
+          </div>
+          <p>Pick a language, describe symptoms or use voice input, then ask for dosage or referral only when needed.</p>
+          <div class="guide-meta">Workflow</div>
+        </article>
+        <article class="guide-card">
+          <div class="guide-top">
+            <h3>Language support</h3>
+            <button class="info-button" onclick="openInfo('languages')" title="Language support">?</button>
+          </div>
+          <p>Built-in UI support currently includes 12 language choices, with same-language consultation behavior in the demo flow.</p>
+          <div class="guide-meta">12 UI languages</div>
+        </article>
+        <article class="guide-card">
+          <div class="guide-top">
+            <h3>Input formats</h3>
+            <button class="info-button" onclick="openInfo('formats')" title="Format support">?</button>
+          </div>
+          <p>MediVoice is designed around text, voice, and image-supported workflows, even when the browser demo focuses mainly on chat.</p>
+          <div class="guide-meta">Text, voice, image</div>
+        </article>
+      </div>
+    </section>
+
     <section class="support-rail">
       <div class="section-label">Quick actions</div>
       <div class="support-grid">
@@ -579,6 +738,15 @@
     </div>
   </div>
 
+  <div id="info-modal" class="info-modal">
+    <div class="modal-box">
+      <div class="modal-kicker">MediVoice guide</div>
+      <h3 id="info-title">Guide</h3>
+      <div id="info-copy" class="modal-copy"></div>
+      <button onclick="closeInfo()">Close</button>
+    </div>
+  </div>
+
   <script>
     let currentLang = "en";
     let currentGreeting = "Hello. I am Medi. Tell me about your patient.";
@@ -589,6 +757,49 @@
 
     const DEFAULT_OLLAMA_URL = "http://localhost:11434/api/chat";
     const MODELS = ["gemma3:4b", "gemma4:e4b"];
+    const INFO_CONTENT = {
+      ollama: {
+        title: "When Ollama is used",
+        body:
+          "Ollama is used every time the app needs a model response.\n\n" +
+          "Its job is to host the local model endpoint, accept the request from MediVoice, run the selected model, and return the answer.\n\n" +
+          "In true offline mode, Ollama should run on the same device or local network. In demo mode, this Custom URL can point to a Kaggle or ngrok proxy."
+      },
+      gemma: {
+        title: "When Gemma is used",
+        body:
+          "Gemma is the reasoning model behind the consultation.\n\n" +
+          "It is used for symptom understanding, multilingual response generation, guided follow-up questions, verdict wording, and general consultation flow.\n\n" +
+          "MediVoice tries the primary model first and then falls back to the secondary Gemma model if needed."
+      },
+      usage: {
+        title: "How to use MediVoice",
+        body:
+          "1. Choose the consultation language from the language rail.\n" +
+          "2. Keep the default Ollama URL for local use, or paste a remote demo endpoint.\n" +
+          "3. Describe symptoms in short natural sentences.\n" +
+          "4. Use the Voice button if your browser supports speech input.\n" +
+          "5. Ask dosage with weight in kg, for example: paracetamol for a 15kg child.\n" +
+          "6. Ask referral with a place name, for example: nearest hospital in Punjab."
+      },
+      languages: {
+        title: "Language support",
+        body:
+          "Current PWA language choices:\n" +
+          "English, Roman Urdu, Urdu, Hindi, Hausa, Swahili, French, Bangla, Somali, Spanish, Portuguese, Indonesian.\n\n" +
+          "The demo flow is designed to reply in the same language that the user selected or typed in.\n\n" +
+          "These choices are aligned with the current repo configuration."
+      },
+      formats: {
+        title: "Supported input formats",
+        body:
+          "Current MediVoice workflow supports:\n" +
+          "Text: symptom description, referral requests, dosage requests.\n" +
+          "Voice: browser speech input in supported browsers.\n" +
+          "Image: planned and app-level supported workflow for wound, rash, or visual symptom review.\n\n" +
+          "In this PWA screen, text and voice are the primary visible inputs. Image-supported logic belongs to the broader app stack and repo architecture."
+      }
+    };
     const SYSTEM_PROMPT = `You are Medi, a warm caring AI health assistant for community health workers globally.
 LANGUAGE: Always respond in exact same language user wrote in. Never switch.
 PERSONALITY: Warm, empathetic. Max 2 short sentences. Never repeat questions.
@@ -854,6 +1065,20 @@ EMERGENCY: [reason]`;
       document.getElementById("stats-modal").classList.remove("show");
     }
 
+    function openInfo(key) {
+      const content = INFO_CONTENT[key];
+      if (!content) {
+        return;
+      }
+      document.getElementById("info-title").textContent = content.title;
+      document.getElementById("info-copy").textContent = content.body;
+      document.getElementById("info-modal").classList.add("show");
+    }
+
+    function closeInfo() {
+      document.getElementById("info-modal").classList.remove("show");
+    }
+
     function resetChat() {
       history = [];
       document.getElementById("chat-box").innerHTML = "";
@@ -863,6 +1088,18 @@ EMERGENCY: [reason]`;
     document.getElementById("user-input").addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
         sendMessage();
+      }
+    });
+
+    document.getElementById("info-modal").addEventListener("click", (event) => {
+      if (event.target.id === "info-modal") {
+        closeInfo();
+      }
+    });
+
+    document.getElementById("stats-modal").addEventListener("click", (event) => {
+      if (event.target.id === "stats-modal") {
+        closeStats();
       }
     });
 
