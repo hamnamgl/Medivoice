@@ -3,7 +3,7 @@
 
 > When there is no doctor, no internet, and no time, MediVoice helps the frontline worker make a safer next-step decision.
 
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![License: CC%20BY%204.0](https://img.shields.io/badge/License-CC--BY%204.0-blue.svg)](LICENSE)
 [![Model: Gemma%204](https://img.shields.io/badge/Model-Gemma%204-orange.svg)](https://ollama.com/library/gemma3)
 [![Offline First](https://img.shields.io/badge/Offline-First-green.svg)]()
 [![PWA Ready](https://img.shields.io/badge/PWA-Android%20Ready-brightgreen.svg)]()
@@ -189,4 +189,4 @@ Focused tests already cover:
 
 ## License
 
-Apache 2.0. See [LICENSE](LICENSE).
+Creative Commons Attribution 4.0 International (CC BY 4.0). See [LICENSE](LICENSE).
