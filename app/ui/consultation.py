@@ -1,6 +1,7 @@
 import streamlit as st
 
 from app.core.function_caller import run_agent
+from app.core.language_detector import detect_language
 
 
 def render_consultation() -> None:
@@ -15,7 +16,7 @@ def render_consultation() -> None:
         st.session_state["chief_complaint"] = complaint
         result = run_agent(complaint, st.session_state.get("agent_history", []))
         st.session_state["agent_history"] = result["history"]
-        st.session_state["detected_language"] = result.get("explanation", {}).get("language", "Auto")
+        st.session_state["detected_language"] = detect_language(complaint)
         st.session_state["triage_result"] = {
             "priority": result["response"].split(":", 1)[0],
             "summary": result["response"],

@@ -82,6 +82,29 @@ def _load_json(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def _has_meaningful_custom_referrals(payload: dict) -> bool:
+    facilities = payload.get("facilities", {})
+    emergency = str(payload.get("emergency", "")).strip().lower()
+    country = str(payload.get("country", "")).strip().lower()
+    return bool(facilities) or (
+        emergency
+        and "replace with" not in emergency
+        and country
+        and "custom organization pack" not in country
+    )
+
+
+def _has_meaningful_custom_drugs(payload: dict) -> bool:
+    medicines = payload.get("medicines", {})
+    source = str(payload.get("source", "")).strip().lower()
+    version = str(payload.get("version", "")).strip().lower()
+    return bool(medicines) or (
+        source
+        and "replace with" not in source
+        and version != "custom-template"
+    )
+
+
 def _merge_facility_maps(base: dict, overlay: dict) -> dict:
     merged = dict(base)
     for region, cities in overlay.items():
@@ -94,6 +117,13 @@ def _merge_facility_maps(base: dict, overlay: dict) -> dict:
 
 def _normalize_country_key(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")
+
+
+def _pretty_place_name(name: str) -> str:
+    cleaned = str(name).strip()
+    if cleaned.isalpha() and len(cleaned) <= 4:
+        return cleaned.upper()
+    return cleaned.replace("_", " ").title()
 
 
 def _merge_country_pack(base: dict, overlay: dict) -> dict:
@@ -122,7 +152,7 @@ def _load_base_referral_packs() -> dict:
 def _load_referral_data() -> dict:
     packs = _load_base_referral_packs()
     custom = _load_json(CUSTOM_REFERRALS_FILE)
-    if not custom:
+    if not custom or not _has_meaningful_custom_referrals(custom):
         return {"countries": packs}
 
     custom_country = custom.get("country", "Custom")
@@ -135,7 +165,7 @@ def _load_referral_data() -> dict:
 def _load_drug_data() -> dict:
     base = _load_json(DRUGS_FILE)
     custom = _load_json(CUSTOM_DRUGS_FILE)
-    if not custom:
+    if not custom or not _has_meaningful_custom_drugs(custom):
         return base
 
     merged = dict(base)
@@ -218,17 +248,17 @@ def _lookup_referral_text(region_text: str) -> str:
             for region, cities in facilities.items():
                 if isinstance(cities, dict) and cities:
                     first_city, first_facility = next(iter(cities.items()))
-                    return f"{country_name}: {first_city.title()}, {region.title()} - {first_facility}. Emergency: {emergency}"
+                    return f"{country_name}: {_pretty_place_name(first_city)}, {_pretty_place_name(region)} - {first_facility}. Emergency: {emergency}"
 
         for region, cities in facilities.items():
             if region in region_text and isinstance(cities, dict) and cities:
                 first_city, first_facility = next(iter(cities.items()))
-                return f"{country_name}: {first_city.title()}, {region.title()} - {first_facility}. Emergency: {emergency}"
+                return f"{country_name}: {_pretty_place_name(first_city)}, {_pretty_place_name(region)} - {first_facility}. Emergency: {emergency}"
             if not isinstance(cities, dict):
                 continue
             for city, facility in cities.items():
                 if city in region_text:
-                    return f"{country_name}: {city.title()}, {region.title()} - {facility}. Emergency: {emergency}"
+                    return f"{country_name}: {_pretty_place_name(city)}, {_pretty_place_name(region)} - {facility}. Emergency: {emergency}"
 
     fallback_country = countries.get("pakistan") or next(iter(countries.values()), {})
     fallback_emergency = fallback_country.get("emergency", "Ask local CHW supervisor")
@@ -268,11 +298,13 @@ def _build_direct_tool_reply(tool_name: str, tool_result: str | dict) -> str:
 
 
 def _build_explainability(tool_name: str | None, tool_result: str | dict, user_message: str) -> dict | None:
+    language = _detect_language(user_message or "")
     if tool_name == "get_drug_dosage":
         drug = _extract_drug(user_message or "")
         medicine = DRUG_DATA.get("medicines", {}).get(drug or "", {})
         return {
             "type": "drug_reference",
+            "language": language,
             "source": DRUG_DATA.get("source"),
             "source_url": DRUG_DATA.get("source_url"),
             "matched_item": drug,
@@ -281,12 +313,14 @@ def _build_explainability(tool_name: str | None, tool_result: str | dict, user_m
     if tool_name == "lookup_referral":
         return {
             "type": "referral_lookup",
+            "language": language,
             "source": "local_referral_pack",
             "matched_query": user_message,
         }
     if tool_name == "assess_triage" and isinstance(tool_result, dict):
         return {
             "type": "triage_rule",
+            "language": language,
             "matched_rules": tool_result.get("matched_rules", []),
             "rule_source": tool_result.get("rule_source"),
         }

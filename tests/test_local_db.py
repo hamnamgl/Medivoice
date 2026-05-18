@@ -1,11 +1,10 @@
-from pathlib import Path
 from uuid import uuid4
 
 import app.utils.local_db as db_module
 
 
-def test_local_db_visit_logging_and_stats(monkeypatch):
-    temp_db = Path("data") / f"test_medivoice_{uuid4().hex}.db"
+def test_local_db_visit_logging_and_stats(monkeypatch, tmp_path):
+    temp_db = tmp_path / f"test_medivoice_{uuid4().hex}.db"
     monkeypatch.setattr(db_module, "DB_PATH", temp_db)
 
     db_module.init_db()
@@ -31,8 +30,8 @@ def test_local_db_visit_logging_and_stats(monkeypatch):
     assert stats["referrals"] == 1
 
 
-def test_local_db_settings_roundtrip(monkeypatch):
-    temp_db = Path("data") / f"test_settings_{uuid4().hex}.db"
+def test_local_db_settings_roundtrip(monkeypatch, tmp_path):
+    temp_db = tmp_path / f"test_settings_{uuid4().hex}.db"
     monkeypatch.setattr(db_module, "DB_PATH", temp_db)
 
     db_module.init_db()

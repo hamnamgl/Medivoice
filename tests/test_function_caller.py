@@ -131,3 +131,25 @@ def test_custom_drug_overlay_adds_medicine(monkeypatch, tmp_path):
     merged = function_module._load_drug_data()
     assert merged["medicines"]["testmed"]["fixed_dose"] == 5
     assert "paracetamol" in merged["medicines"]
+
+
+def test_template_custom_drug_overlay_is_ignored(monkeypatch, tmp_path):
+    custom_drugs = tmp_path / "drugs.json"
+    custom_drugs.write_text(
+        '{"version":"custom-template","source":"Replace with your approved local formulary or NGO protocol","medicines":{}}',
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(function_module, "CUSTOM_DRUGS_FILE", custom_drugs)
+    merged = function_module._load_drug_data()
+    assert merged["source"] != "Replace with your approved local formulary or NGO protocol"
+
+
+def test_template_custom_referral_overlay_is_ignored(monkeypatch, tmp_path):
+    custom_referrals = tmp_path / "referrals.json"
+    custom_referrals.write_text(
+        '{"country":"Custom Organization Pack","emergency":"Replace with your local ambulance or supervisor number","facilities":{}}',
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(function_module, "CUSTOM_REFERRALS_FILE", custom_referrals)
+    merged = function_module._load_referral_data()
+    assert "custom_organization_pack" not in merged["countries"]
